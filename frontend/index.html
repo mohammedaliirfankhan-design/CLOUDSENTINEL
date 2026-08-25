@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CloudSentinel SOC Dashboard</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #0b1120;
+            color: #e5e7eb;
+        }
+
+        .header {
+            background: #111827;
+            padding: 20px 30px;
+            border-bottom: 1px solid #1f2937;
+        }
+
+        .header h1 {
+            font-size: 26px;
+        }
+
+        .header p {
+            margin-top: 5px;
+            color: #9ca3af;
+            font-size: 14px;
+        }
+
+        .container {
+            padding: 25px 30px;
+        }
+
+        /* KPI CARDS */
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 18px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .card-title {
+            color: #9ca3af;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .card-value {
+            font-size: 30px;
+            font-weight: bold;
+        }
+
+        .high {
+            color: #ef4444;
+        }
+
+        .medium {
+            color: #f59e0b;
+        }
+
+        .low {
+            color: #22c55e;
+        }
+
+        /* RISK DISTRIBUTION */
+
+        .risk-section {
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .risk-section h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        .risk-container {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .risk-chart {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: conic-gradient(
+                #ef4444 0% 100%,
+                #f59e0b 100% 100%,
+                #22c55e 100% 100%
+            );
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .risk-chart-inner {
+            width: 110px;
+            height: 110px;
+            background: #111827;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .risk-chart-inner strong {
+            font-size: 28px;
+        }
+
+        .risk-chart-inner span {
+            color: #9ca3af;
+            font-size: 12px;
+        }
+
+        .risk-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot-high {
+            background: #ef4444;
+        }
+
+        .dot-medium {
+            background: #f59e0b;
+        }
+
+        .dot-low {
+            background: #22c55e;
+        }
+
+        /* ALERT TABLE */
+
+        .section {
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .section h2 {
+            font-size: 18px;
+            margin-bottom: 18px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            color: #9ca3af;
+            font-size: 13px;
+            padding: 12px;
+            border-bottom: 1px solid #374151;
+        }
+
+        td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #1f2937;
+            font-size: 14px;
+        }
+
+        .badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge-high {
+            background: #451a1a;
+            color: #f87171;
+        }
+
+        .badge-medium {
+            background: #451a03;
+            color: #fbbf24;
+        }
+
+        .badge-low {
+            background: #052e16;
+            color: #4ade80;
+        }
+
+        .status {
+            margin-top: 15px;
+            color: #22c55e;
+            font-size: 13px;
+        }
+.filters {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.filters input,
+.filters select {
+    background: #0b1120;
+    color: #e5e7eb;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 14px;
+}
+
+.filters input {
+    flex: 1;
+}
+
+.filters input:focus,
+.filters select:focus {
+    outline: none;
+    border-color: #60a5fa;
+}
+
+/* ============================= */
+/* ALERT INVESTIGATION MODAL     */
+/* ============================= */
+
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(2, 6, 23, 0.78);
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    width: min(850px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 14px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+    padding: 24px;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 22px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #334155;
+}
+
+.modal-header h2 {
+    margin: 0;
+    color: #f8fafc;
+    font-size: 22px;
+}
+
+.close-button {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 28px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.close-button:hover {
+    color: #f8fafc;
+}
+
+.alert-details {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+.detail-item {
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 10px;
+    padding: 14px;
+}
+
+.detail-label {
+    display: block;
+    color: #64748b;
+    font-size: 12px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+.detail-value {
+    color: #e5e7eb;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.recommendation {
+    background: #111827;
+    border-left: 4px solid #60a5fa;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.recommendation h3 {
+    margin-top: 0;
+    color: #f8fafc;
+}
+
+.recommendation p {
+    color: #cbd5e1;
+    line-height: 1.6;
+}
+
+/* =================================
+   INVESTIGATION CONTROLS
+   ================================= */
+
+.investigation-controls {
+    margin-top: 20px;
+    padding: 18px;
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid #263247;
+    border-radius: 10px;
+}
+
+.control-group {
+    margin-bottom: 16px;
+}
+
+.control-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #cbd5e1;
+    font-weight: 600;
+}
+
+.control-group select,
+.control-group textarea {
+    width: 100%;
+    box-sizing: border-box;
+    background: #0f172a;
+    color: #f8fafc;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.control-group select:focus,
+.control-group textarea:focus {
+    outline: none;
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.15);
+}
+
+.control-group textarea {
+    resize: vertical;
+    min-height: 90px;
+}
+
+.save-investigation-button {
+    width: 100%;
+    padding: 12px 18px;
+    border: none;
+    border-radius: 8px;
+    background: #2563eb;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.save-investigation-button:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+}
+
+.save-investigation-button:active {
+    transform: translateY(0);
+}
+
+        /* ============================= */
+        /* INVESTIGATION HISTORY         */
+        /* ============================= */
+
+        .investigation-history {
+            margin-top: 20px;
+            padding: 18px;
+            background: rgba(15, 23, 42, 0.65);
+            border: 1px solid #263247;
+            border-radius: 10px;
+        }
+
+        .investigation-history h3 {
+            margin: 0 0 14px 0;
+            color: #f8fafc;
+            font-size: 16px;
+        }
+
+        .history-entry {
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #0b1120;
+            border: 1px solid #263247;
+            border-radius: 8px;
+        }
+
+        .history-entry:last-child {
+            margin-bottom: 0;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .history-header strong {
+            color: #60a5fa;
+            font-size: 13px;
+        }
+
+        .history-header span {
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        .history-notes {
+            color: #cbd5e1;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .history-empty {
+            margin: 0;
+            color: #94a3b8;
+            font-size: 13px;
+        }
+
+        /* RESPONSIVE */
+
+        @media (max-width: 1100px) {
+
+            .cards {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+        }
+
+        @media (max-width: 900px) {
+
+            .cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .risk-container {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+        }
+
+        @media (max-width: 600px) {
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <header class="header">
+
+        <h1>🛡️ CloudSentinel</h1>
+
+        <p>
+            Cloud Security Monitoring & Risk Intelligence Platform
+        </p>
+
+    </header>
+
+
+    <main class="container">
+
+
+        <!-- KPI CARDS -->
+
+            <div class="cards">
+
+            <div class="card">
+
+                <div class="card-title">
+                    Total Alerts
+                </div>
+
+                <div
+                    class="card-value"
+                    id="totalAlerts">
+                    0
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="card-title">
+                    High Risk Alerts
+                </div>
+
+                <div
+                    class="card-value high"
+                    id="highAlerts">
+                    0
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="card-title">
+                    Medium Risk Alerts
+                </div>
+
+                <div
+                    class="card-value medium"
+                    id="mediumAlerts">
+                    0
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="card-title">
+                    Low Risk Alerts
+                </div>
+
+                <div
+                    class="card-value low"
+                    id="lowAlerts">
+                    0
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="card-title">
+                    Average Risk Score
+                </div>
+
+                <div
+                    class="card-value"
+                    id="averageRisk">
+                    0
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- INVESTIGATION STATUS -->
+
+        <section class="investigation-summary">
+
+            <h2>Investigation Status</h2>
+
+            <div class="cards">
+
+                <div class="card">
+
+                    <div class="card-title">
+                        Open Alerts
+                    </div>
+
+                    <div
+                        class="card-value"
+                        id="openAlerts">
+                        0
+                    </div>
+
+                </div>
+
+
+                <div class="card">
+
+                    <div class="card-title">
+                        Investigating
+                    </div>
+
+                    <div
+                        class="card-value medium"
+                        id="investigatingAlerts">
+                        0
+                    </div>
+
+                </div>
+
+
+                <div class="card">
+
+                    <div class="card-title">
+                        Resolved Alerts
+                    </div>
+
+                    <div
+                        class="card-value low"
+                        id="resolvedAlerts">
+                        0
+                    </div>
+
+                </div>
+
+
+                <div class="card">
+
+                    <div class="card-title">
+                        Avg Resolution Time
+                    </div>
+
+                    <div
+                        class="card-value"
+                        id="averageResolutionTime">
+                        0 min
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- RISK DISTRIBUTION -->
+
+        <section class="risk-section">
+
+            <h2>Risk Distribution</h2>
+
+            <div class="risk-container">
+
+                <div
+                    class="risk-chart"
+                    id="riskChart">
+
+                    <div class="risk-chart-inner">
+
+                        <strong id="chartTotal">
+                            0
+                        </strong>
+
+                        <span>
+                            Alerts
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="risk-legend">
+
+                    <div class="legend-item">
+
+                        <div class="legend-dot dot-high"></div>
+
+                        <span>
+                            High Risk:
+                            <strong id="legendHigh">
+                                0
+                            </strong>
+                        </span>
+
+                    </div>
+
+
+                    <div class="legend-item">
+
+                        <div class="legend-dot dot-medium"></div>
+
+                        <span>
+                            Medium Risk:
+                            <strong id="legendMedium">
+                                0
+                            </strong>
+                        </span>
+
+                    </div>
+
+
+                    <div class="legend-item">
+
+                        <div class="legend-dot dot-low"></div>
+
+                        <span>
+                            Low Risk:
+                            <strong id="legendLow">
+                                0
+                            </strong>
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- SECURITY ALERTS -->
+
+        <h2>Security Alerts</h2>
+
+<div class="filters">
+
+    <input
+        type="text"
+        id="searchInput"
+        placeholder="Search user, IP, rule or action..."
+    >
+
+    <select id="severityFilter">
+        <option value="ALL">All Severities</option>
+        <option value="HIGH">High</option>
+        <option value="MEDIUM">Medium</option>
+        <option value="LOW">Low</option>
+    </select>
+
+</div>
+
+
+
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>ID</th>
+
+                        <th>Rule</th>
+
+                        <th>Severity</th>
+
+                        <th>Risk Score</th>
+
+                        <th>Risk Level</th>
+
+                        <th>User</th>
+
+                        <th>Source IP</th>
+
+                        <th>Action</th>
+
+                        <th>Time</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="alertsTable">
+
+                    <tr>
+
+                        <td colspan="9">
+                            Loading alerts...
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+
+            <div
+                class="status"
+                id="status">
+
+                ● Connecting to CloudSentinel API...
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+</main>
+
+<!-- ALERT INVESTIGATION MODAL -->
+
+<div id="alertModal" class="modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+            <h2>Alert Investigation</h2>
+
+           <button
+    id="closeAlertModalButton"
+    class="close-button"
+    type="button"
+>
+    ×
+</button>
+        </div>
+
+        <div class="investigation-grid">
+
+            <div class="detail-item">
+                <span>Alert ID</span>
+                <strong id="detailId">-</strong>
+            </div>
+
+            <div class="detail-item">
+                <span>Detection Rule</span>
+                <strong id="detailRule">-</strong>
+            </div>
+
+            <div class="detail-item">
+                <span>Severity</span>
+                <strong id="detailSeverity">-</strong>
+            </div>
+
+            <div class="detail-item">
+                <span>Risk Score</span>
+                <strong id="detailRiskScore">-</strong>
+            </div>
+
+            <div class="detail-item">
+                <span>Risk Level</span>
+                <strong id="detailRiskLevel">-</strong>
+            </div>
+
+            <div class="detail-item">
+                <span>Event ID</span>
+                <strong id="detailEventId">-</strong>
+            </div>
+
+            <div class="detail-item">
+                <span>User</span>
+                <strong id="detailUser">-</strong>
+            </div>
+
+            <div class="detail-item">
+                <span>Source IP</span>
+                <strong id="detailSourceIp">-</strong>
+            </div>
+
+            <div class="detail-item">
+                <span>Action</span>
+                <strong id="detailAction">-</strong>
+            </div>
+
+            <div class="detail-item">
+                <span>Resource</span>
+                <strong id="detailResource">-</strong>
+            </div>
+
+            <div class="detail-item">
+                <span>Timestamp</span>
+                <strong id="detailTime">-</strong>
+            </div>
+
+        </div>
+
+        <div class="recommendation">
+
+            <h3>Recommended Analyst Action</h3>
+
+            <p id="detailRecommendation">
+                Investigate this security event and verify whether
+                the activity was authorized.
+            </p>
+
+        </div>
+<div class="investigation-controls">
+
+    <div class="control-group">
+        <label for="investigationStatus">Investigation Status</label>
+
+        <select id="investigationStatus">
+            <option value="OPEN">Open</option>
+            <option value="INVESTIGATING">Investigating</option>
+            <option value="RESOLVED">Resolved</option>
+        </select>
+    </div>
+
+    <div class="control-group">
+        <label for="analystNotes">Analyst Notes</label>
+
+        <textarea
+            id="analystNotes"
+            rows="4"
+            placeholder="Enter investigation notes..."
+        ></textarea>
+    </div>
+
+    <button
+        type="button"
+        class="save-investigation-button"
+        onclick="saveInvestigation()"
+    >
+        Save Investigation
+    </button>
+
+    </div>
+
+    <div class="investigation-history">
+        <h3>Investigation History</h3>
+        <div id="investigationHistory">
+            <p class="history-empty">No investigation history available.</p>
+        </div>
+    </div>
+
+    </div>
+
+</div>
+    </div>
+
+</div>
+
+<script>
+
+
+        const API_URL =
+    "http://127.0.0.1:8000/alerts";
+
+const METRICS_URL =
+    "http://127.0.0.1:8000/metrics";
+
+let allAlerts = [];
+
+let currentAlertId = null;
+
+async function loadMetrics() {
+
+    try {
+
+        const response =
+            await fetch(METRICS_URL);
+
+        if (!response.ok) {
+            throw new Error("Metrics API request failed");
+        }
+
+        const metrics =
+            await response.json();
+
+        document.getElementById("openAlerts").textContent =
+            metrics.open_alerts;
+
+        document.getElementById("investigatingAlerts").textContent =
+            metrics.investigating_alerts;
+
+        document.getElementById("resolvedAlerts").textContent =
+            metrics.resolved_alerts;
+
+        const minutes = metrics.average_resolution_time_minutes;
+
+let resolutionTime;
+
+if (minutes < 60) {
+    resolutionTime = `${Math.round(minutes)} min`;
+} else if (minutes < 1440) {
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = Math.round(minutes % 60);
+
+    resolutionTime =
+        remainingMinutes > 0
+            ? `${hours}h ${remainingMinutes}m`
+            : `${hours}h`;
+} else {
+    const days = Math.floor(minutes / 1440);
+    const remainingHours = Math.floor((minutes % 1440) / 60);
+
+    resolutionTime =
+        remainingHours > 0
+            ? `${days}d ${remainingHours}h`
+            : `${days}d`;
+}
+
+document.getElementById("averageResolutionTime").textContent =
+    resolutionTime;
+
+    }
+
+    catch (error) {
+
+        console.error("Error loading metrics:", error);
+
+    }
+
+}
+
+        async function loadAlerts() {
+
+            try {
+
+                const response =
+                    await fetch(API_URL);
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "API request failed"
+                    );
+
+                }
+
+
+                const alerts =
+                    await response.json();
+
+
+                allAlerts = alerts;
+updateDashboard(alerts);
+
+
+                document.getElementById("status").textContent =
+                    "● Connected to CloudSentinel API";
+
+
+            }
+
+            catch (error) {
+
+                console.error(error);
+
+
+                document.getElementById("status").textContent =
+                    "● Unable to connect to CloudSentinel API";
+
+            }
+
+        }
+function closeAlertModal() {
+    document.getElementById("alertModal").style.display = "none";
+}
+document.getElementById("closeAlertModalButton")
+    .addEventListener("click", closeAlertModal);
+
+document.getElementById("alertModal")
+    .addEventListener("click", function(event) {
+        if (event.target === this) {
+            closeAlertModal();
+        }
+    });
+
+        function updateDashboard(alerts) {
+    
+            /* TOTAL ALERTS */
+
+            document.getElementById("totalAlerts").textContent =
+                alerts.length;
+
+
+            /* RISK COUNTS */
+
+            const high =
+                alerts.filter(
+                    alert =>
+                        alert.risk_level === "HIGH"
+                ).length;
+
+
+            const medium =
+                alerts.filter(
+                    alert =>
+                        alert.risk_level === "MEDIUM"
+                ).length;
+
+
+            const low =
+                alerts.filter(
+                    alert =>
+                        alert.risk_level === "LOW"
+                ).length;
+
+
+            document.getElementById("highAlerts").textContent =
+                high;
+
+
+            document.getElementById("mediumAlerts").textContent =
+                medium;
+
+
+            document.getElementById("lowAlerts").textContent =
+                low;
+
+
+            /* AVERAGE RISK */
+
+            const averageRisk =
+                alerts.length > 0
+
+                    ? Math.round(
+
+                        alerts.reduce(
+                            (sum, alert) =>
+                                sum + alert.risk_score,
+                            0
+                        ) / alerts.length
+
+                    )
+
+                    : 0;
+
+
+            document.getElementById("averageRisk").textContent =
+                averageRisk;
+
+
+            /* RISK LEGEND */
+
+            document.getElementById("legendHigh").textContent =
+                high;
+
+
+            document.getElementById("legendMedium").textContent =
+                medium;
+
+
+            document.getElementById("legendLow").textContent =
+                low;
+
+
+            document.getElementById("chartTotal").textContent =
+                alerts.length;
+
+
+            /* RISK DONUT */
+
+            const total =
+                alerts.length;
+
+
+            const highPercent =
+                total > 0
+                    ? (high / total) * 100
+                    : 0;
+
+
+            const mediumPercent =
+                total > 0
+                    ? (medium / total) * 100
+                    : 0;
+
+
+            const mediumEnd =
+                highPercent + mediumPercent;
+
+
+            document.getElementById("riskChart").style.background =
+
+                total > 0
+
+                    ? `conic-gradient(
+                        #ef4444 0% ${highPercent}%,
+                        #f59e0b ${highPercent}% ${mediumEnd}%,
+                        #22c55e ${mediumEnd}% 100%
+                    )`
+
+                    : "#374151";
+
+
+            /* ALERT TABLE */
+
+            const table =
+                document.getElementById("alertsTable");
+
+
+            table.innerHTML = "";
+
+
+            alerts.forEach(alert => {
+
+
+                const row =
+                    document.createElement("tr");
+
+
+                let badgeClass =
+                    "badge-low";
+
+
+                if (
+                    alert.risk_level === "HIGH"
+                ) {
+
+                    badgeClass =
+                        "badge-high";
+
+                }
+
+                else if (
+                    alert.risk_level === "MEDIUM"
+                ) {
+
+                    badgeClass =
+                        "badge-medium";
+
+                }
+
+
+                row.innerHTML = `
+
+                    <td>
+                        ${alert.id}
+                    </td>
+
+                    <td>
+                        ${alert.rule}
+                    </td>
+
+                    <td>
+
+                        <span class="badge ${badgeClass}">
+
+                            ${alert.severity}
+
+                        </span>
+
+                    </td>
+
+                    <td>
+                        ${alert.risk_score}
+                    </td>
+
+                    <td>
+
+                        <span class="badge ${badgeClass}">
+
+                            ${alert.risk_level}
+
+                        </span>
+
+                    </td>
+
+                    <td>
+                        ${alert.user}
+                    </td>
+
+                    <td>
+                        ${alert.source_ip}
+                    </td>
+
+                    <td>
+                        ${alert.action}
+                    </td>
+
+                    <td>
+                        ${alert.created_at}
+                    </td>
+
+                `;
+   row.addEventListener("click", () => {
+            openAlertModal(alert);
+        });
+
+
+                table.appendChild(row);
+
+            });
+
+        }
+async function openAlertModal(alert) {
+    currentAlertId = alert.id;
+
+    document.getElementById("detailId").textContent =
+        alert.id ?? "-";
+
+    document.getElementById("detailRule").textContent =
+        alert.rule ?? "-";
+
+    document.getElementById("detailSeverity").textContent =
+        alert.severity ?? "-";
+
+    document.getElementById("detailRiskScore").textContent =
+        alert.risk_score ?? "-";
+
+    document.getElementById("detailRiskLevel").textContent =
+        alert.risk_level ?? "-";
+
+    document.getElementById("detailEventId").textContent =
+        alert.event_id ?? "-";
+
+    document.getElementById("detailUser").textContent =
+        alert.user ?? "-";
+
+    document.getElementById("detailSourceIp").textContent =
+        alert.source_ip ?? "-";
+
+    document.getElementById("detailAction").textContent =
+        alert.action ?? "-";
+
+    document.getElementById("detailResource").textContent =
+    alert.resource ?? "-";    
+
+    document.getElementById("detailTime").textContent =
+        alert.created_at ?? "-";
+
+    document.getElementById("detailRecommendation").textContent =
+        getRecommendation(alert);
+
+    // Reset investigation controls for the newly selected alert
+    document.getElementById("investigationStatus").value = "OPEN";
+    document.getElementById("analystNotes").value = "";
+
+    // Load previously saved investigation, if one exists
+    try {
+        const response = await fetch(
+            `http://127.0.0.1:8000/investigations/${alert.id}`
+        );
+
+        if (response.ok) {
+            const investigation = await response.json();
+
+            if (investigation.status) {
+                document.getElementById("investigationStatus").value =
+                    investigation.status;
+            }
+
+            if (investigation.analyst_notes) {
+                document.getElementById("analystNotes").value =
+                    investigation.analyst_notes;
+            }
+        }
+    } catch (error) {
+        console.error("Error loading investigation:", error);
+    }
+await loadInvestigationHistory(alert.id);
+    document.getElementById("alertModal").style.display = "flex";
+}
+
+async function loadInvestigationHistory(alertId) {
+    const historyContainer =
+        document.getElementById("investigationHistory");
+
+    historyContainer.innerHTML =
+        '<p class="history-empty">Loading investigation history...</p>';
+
+    try {
+        const response = await fetch(
+            `http://127.0.0.1:8000/investigations/${alertId}/history`
+        );
+
+        if (!response.ok) {
+            throw new Error("Failed to load investigation history");
+        }
+
+        const history = await response.json();
+
+        if (!history || history.length === 0) {
+            historyContainer.innerHTML =
+                '<p class="history-empty">No investigation history available.</p>';
+            return;
+        }
+
+        historyContainer.innerHTML = history
+            .map(entry => `
+                <div class="history-entry">
+                    <div class="history-header">
+                        <strong>${entry.status}</strong>
+                        <span>${entry.changed_at}</span>
+                    </div>
+                    <div class="history-notes">
+                        ${entry.analyst_notes || "No analyst notes."}
+                    </div>
+                </div>
+            `)
+            .join("");
+
+    } catch (error) {
+        console.error("Error loading investigation history:", error);
+
+        historyContainer.innerHTML =
+            '<p class="history-empty">Unable to load investigation history.</p>';
+    }
+}
+
+async function saveInvestigation() {
+
+    if (currentAlertId === null) {
+        alert("No alert selected.");
+        return;
+    }
+
+    const status = document.getElementById("investigationStatus").value;
+    const analystNotes = document.getElementById("analystNotes").value;
+
+    try {
+        const response = await fetch("http://127.0.0.1:8000/investigations", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                alert_id: currentAlertId,
+                status: status,
+                analyst_notes: analystNotes
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to save investigation");
+        }
+
+        const result = await response.json();
+
+            await loadMetrics();
+            await loadInvestigationHistory(currentAlertId);
+
+            alert("Investigation saved successfully.");
+
+            console.log(result);
+
+    } catch (error) {
+        console.error("Error saving investigation:", error);
+        alert("Failed to save investigation.");
+    }
+}
+
+function getRecommendation(alert) {
+
+    if (alert.risk_level === "HIGH") {
+        return "Immediately investigate this alert, validate the source activity, and determine whether the account or resource has been compromised.";
+    }
+
+    if (alert.risk_level === "MEDIUM") {
+        return "Investigate the activity and verify whether the event was authorized or part of normal user behavior.";
+    }
+
+    return "Monitor the activity and review for any related suspicious events.";
+}
+
+document.getElementById("searchInput").addEventListener("input", applyFilters);
+
+document.getElementById("severityFilter").addEventListener("change", applyFilters);
+
+
+function applyFilters() {
+
+    const searchTerm =
+        document.getElementById("searchInput").value.toLowerCase();
+
+    const severity =
+        document.getElementById("severityFilter").value;
+
+    const filteredAlerts = allAlerts.filter(alert => {
+
+        const matchesSearch =
+            alert.user?.toLowerCase().includes(searchTerm) ||
+            alert.source_ip?.toLowerCase().includes(searchTerm) ||
+            alert.rule?.toLowerCase().includes(searchTerm) ||
+            alert.action?.toLowerCase().includes(searchTerm);
+
+        const matchesSeverity =
+            severity === "ALL" ||
+            alert.risk_level === severity;
+
+        return matchesSearch && matchesSeverity;
+    });
+
+    updateDashboard(filteredAlerts);
+}
+
+            /* INITIAL LOAD */
+
+        loadAlerts();
+        loadMetrics();
+
+    </script>
+
+</body>
+
+</html>
