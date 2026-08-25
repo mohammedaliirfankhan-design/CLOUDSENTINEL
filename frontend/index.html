@@ -974,6 +974,17 @@
     </div>
 
     <div class="control-group">
+    <label for="assignedAnalyst">Assigned Analyst</label>
+
+    <select id="assignedAnalyst">
+        <option value="">Unassigned</option>
+        <option value="Ali Khan">Ali Khan</option>
+        <option value="SOC Analyst 2">SOC Analyst 2</option>
+        <option value="SOC Analyst 3">SOC Analyst 3</option>
+    </select>
+</div>
+
+    <div class="control-group">
         <label for="analystNotes">Analyst Notes</label>
 
         <textarea
@@ -1397,6 +1408,7 @@ async function openAlertModal(alert) {
 
     // Reset investigation controls for the newly selected alert
     document.getElementById("investigationStatus").value = "OPEN";
+    document.getElementById("assignedAnalyst").value = "";
     document.getElementById("analystNotes").value = "";
 
     // Load previously saved investigation, if one exists
@@ -1416,6 +1428,10 @@ async function openAlertModal(alert) {
             if (investigation.analyst_notes) {
                 document.getElementById("analystNotes").value =
                     investigation.analyst_notes;
+            }
+            if (investigation.assigned_analyst !== undefined) {
+                document.getElementById("assignedAnalyst").value =
+                    investigation.assigned_analyst;
             }
         }
     } catch (error) {
@@ -1479,7 +1495,8 @@ async function saveInvestigation() {
     }
 
     const status = document.getElementById("investigationStatus").value;
-    const analystNotes = document.getElementById("analystNotes").value;
+    const assignedAnalyst = document.getElementById("assignedAnalyst").value;
+const analystNotes = document.getElementById("analystNotes").value;
 
     try {
         const response = await fetch("http://127.0.0.1:8000/investigations", {
@@ -1488,9 +1505,10 @@ async function saveInvestigation() {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                alert_id: currentAlertId,
-                status: status,
-                analyst_notes: analystNotes
+            alert_id: currentAlertId,
+            status: status,
+            assigned_analyst: assignedAnalyst,
+            analyst_notes: analystNotes
             })
         });
 

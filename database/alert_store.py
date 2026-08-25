@@ -10,7 +10,7 @@ def get_connection():
 
 
 def initialize_database():
-    """Create the alerts table if it does not already exist."""
+    """Create and migrate CloudSentinel database tables."""
 
     connection = get_connection()
     cursor = connection.cursor()
@@ -30,26 +30,27 @@ def initialize_database():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS investigations (
-        alert_id INTEGER PRIMARY KEY,
-        status TEXT NOT NULL DEFAULT 'OPEN',
-        analyst_notes TEXT,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        resolved_at TIMESTAMP,
-        FOREIGN KEY (alert_id) REFERENCES alerts(id)
-    )
-""")
 
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS investigation_history (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        alert_id INTEGER NOT NULL,
-        status TEXT NOT NULL,
-        analyst_notes TEXT,
-        changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (alert_id) REFERENCES alerts(id)
-    )
+        CREATE TABLE IF NOT EXISTS investigations (
+            alert_id INTEGER PRIMARY KEY,
+            status TEXT NOT NULL DEFAULT 'OPEN',
+            analyst_notes TEXT,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            resolved_at TIMESTAMP,
+            FOREIGN KEY (alert_id) REFERENCES alerts(id)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS investigation_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            alert_id INTEGER NOT NULL,
+            status TEXT NOT NULL,
+            analyst_notes TEXT,
+            changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (alert_id) REFERENCES alerts(id)
+        )
     """)
 
     # Add resolved_at to existing databases if the column is missing
@@ -74,6 +75,37 @@ def initialize_database():
             WHERE status = 'RESOLVED'
               AND resolved_at IS NULL
         """)
+
+    # Add assigned_analyst to existing investigations databases
+    cursor.execute("PRAGMA table_info(investigations)")
+
+    investigation_columns = [
+        row[1]
+        for row in cursor.fetchall()
+    ]
+
+    if "assigned_analyst" not in investigation_columns:
+
+        cursor.execute("""
+            ALTER TABLE investigations
+            ADD COLUMN assigned_analyst TEXT
+        """)
+
+    # Add assigned_analyst to existing investigation history databases
+    cursor.execute("PRAGMA table_info(investigation_history)")
+
+    history_columns = [
+        row[1]
+        for row in cursor.fetchall()
+    ]
+
+    if "assigned_analyst" not in history_columns:
+
+        cursor.execute("""
+            ALTER TABLE investigation_history
+            ADD COLUMN assigned_analyst TEXT
+        """)
+
     connection.commit()
     connection.close()
 
@@ -144,7 +176,12 @@ def get_alerts():
 
     return alerts
 
-def save_investigation(alert_id: int, status: str, analyst_notes: str):
+def save_investigation(
+    alert_id: int,
+    status: str,
+    analyst_notes: str,
+    assigned_analyst: str
+):
     """Save or update an analyst investigation and record its history."""
 
     connection = get_connection()
@@ -156,20 +193,23 @@ def save_investigation(alert_id: int, status: str, analyst_notes: str):
                 alert_id,
                 status,
                 analyst_notes,
+                assigned_analyst,
                 updated_at,
                 resolved_at
             )
-            VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             ON CONFLICT(alert_id)
             DO UPDATE SET
                 status = excluded.status,
                 analyst_notes = excluded.analyst_notes,
+                assigned_analyst = excluded.assigned_analyst,
                 updated_at = CURRENT_TIMESTAMP,
                 resolved_at = CURRENT_TIMESTAMP
         """, (
             alert_id,
             status,
-            analyst_notes
+            analyst_notes,
+            assigned_analyst
         ))
 
     else:
@@ -178,18 +218,21 @@ def save_investigation(alert_id: int, status: str, analyst_notes: str):
                 alert_id,
                 status,
                 analyst_notes,
+                assigned_analyst,
                 updated_at
             )
-            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
             ON CONFLICT(alert_id)
             DO UPDATE SET
                 status = excluded.status,
                 analyst_notes = excluded.analyst_notes,
+                assigned_analyst = excluded.assigned_analyst,
                 updated_at = CURRENT_TIMESTAMP
         """, (
             alert_id,
             status,
-            analyst_notes
+            analyst_notes,
+            assigned_analyst
         ))
 
     # Record every investigation status change in history,
@@ -198,13 +241,15 @@ def save_investigation(alert_id: int, status: str, analyst_notes: str):
         INSERT INTO investigation_history (
             alert_id,
             status,
-            analyst_notes
+            analyst_notes,
+            assigned_analyst
         )
-        VALUES (?, ?, ?)
+        VALUES (?, ?, ?, ?)
     """, (
         alert_id,
         status,
-        analyst_notes
+        analyst_notes,
+        assigned_analyst
     ))
 
     connection.commit()
@@ -222,7 +267,8 @@ def get_investigation(alert_id: int):
             alert_id,
             status,
             analyst_notes,
-            updated_at
+            updated_at,
+            assigned_analyst
         FROM investigations
         WHERE alert_id = ?
     """, (alert_id,))
@@ -238,7 +284,8 @@ def get_investigation(alert_id: int):
         "alert_id": investigation[0],
         "status": investigation[1],
         "analyst_notes": investigation[2],
-        "updated_at": investigation[3]
+        "updated_at": investigation[3],
+        "assigned_analyst": investigation[4]
     }
 def get_investigation_history(alert_id: int):
     """Retrieve the investigation history for an alert."""
@@ -252,7 +299,8 @@ def get_investigation_history(alert_id: int):
             alert_id,
             status,
             analyst_notes,
-            changed_at
+            changed_at,
+            assigned_analyst
         FROM investigation_history
         WHERE alert_id = ?
         ORDER BY changed_at DESC, id DESC
@@ -268,7 +316,8 @@ def get_investigation_history(alert_id: int):
             "alert_id": row[1],
             "status": row[2],
             "analyst_notes": row[3],
-            "changed_at": row[4]
+            "changed_at": row[4],
+            "assigned_analyst": row[5]
         }
         for row in rows
     ]

@@ -70,17 +70,20 @@ def save_investigation_endpoint(data: dict[str, str | int]):
     alert_id = int(raw_alert_id)
     status = str(raw_status)
     analyst_notes = str(data.get("analyst_notes", ""))
+    assigned_analyst = str(data.get("assigned_analyst", ""))
 
     save_investigation(
         alert_id,
         status,
-        analyst_notes
+        analyst_notes,
+        assigned_analyst
     )
 
     return {
         "message": "Investigation saved successfully",
         "alert_id": alert_id,
-        "status": status
+        "status": status,
+        "assigned_analyst": assigned_analyst
     }
 
 
