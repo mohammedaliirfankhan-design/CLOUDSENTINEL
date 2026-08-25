@@ -50,7 +50,8 @@ def alerts():
         "action",
         "resource",
         "created_at",
-        "investigation_status"
+        "investigation_status",
+        "assigned_analyst"
     ]
 
     return [

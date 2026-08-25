@@ -163,7 +163,8 @@ def get_alerts():
         a.action,
         a.resource,
         a.created_at,
-        COALESCE(i.status, 'OPEN') AS investigation_status
+        COALESCE(i.status, 'OPEN') AS investigation_status,
+        i.assigned_analyst
     FROM alerts a
     LEFT JOIN investigations i
         ON a.id = i.alert_id
