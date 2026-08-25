@@ -1494,6 +1494,22 @@ async function saveInvestigation() {
 
 function getRecommendation(alert) {
 
+    if (alert.rule === "PRIVILEGE_ESCALATION") {
+        return "Immediately investigate the privilege change. Verify whether the IAM action was authorized, identify the initiating user, review the affected role or policy, and check for subsequent suspicious activity.";
+    }
+
+    if (alert.rule === "SUSPICIOUS_IAM_ACTIVITY") {
+        return "Investigate the IAM change, verify whether it was authorized, identify the affected resource, and review for unexpected privilege or access changes.";
+    }
+
+    if (alert.rule === "MULTIPLE_FAILED_LOGINS") {
+        return "Investigate the authentication failures, verify the source IP and affected account, and determine whether the activity indicates credential abuse or normal user behavior.";
+    }
+
+    if (alert.risk_level === "CRITICAL") {
+        return "Immediately investigate this critical alert, validate the source activity, and determine whether the account or resource has been compromised.";
+    }
+
     if (alert.risk_level === "HIGH") {
         return "Immediately investigate this alert, validate the source activity, and determine whether the account or resource has been compromised.";
     }
