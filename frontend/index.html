@@ -823,6 +823,9 @@
 
                         <th>User</th>
 
+
+                        <th>Assigned Analyst</th>
+
                         <th>Source IP</th>
 
                         <th>Action</th>
@@ -1339,6 +1342,10 @@ document.getElementById("alertModal")
 
                     <td>
                         ${alert.user}
+                    </td>
+
+                    <td>
+                        ${alert.assigned_analyst || "-"}
                     </td>
 
                     <td>
