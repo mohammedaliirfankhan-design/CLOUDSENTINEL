@@ -6,7 +6,237 @@
 
     <title>CloudSentinel SOC Dashboard</title>
 
-    <style>
+        <style>
+
+        /* AUTHENTICATION */
+
+        .auth-screen {
+            position: fixed;
+            inset: 0;
+            background: #0b1120;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .auth-card {
+            width: 400px;
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            padding: 35px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+        }
+
+        .auth-card h2 {
+            font-size: 26px;
+            margin-bottom: 8px;
+        }
+
+        .auth-card p {
+            color: #9ca3af;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        .auth-field {
+            margin-bottom: 18px;
+        }
+
+        .auth-field label {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 14px;
+            color: #d1d5db;
+        }
+
+        .auth-field input {
+            width: 100%;
+            padding: 12px;
+            background: #0b1120;
+            color: #e5e7eb;
+            border: 1px solid #374151;
+            border-radius: 7px;
+            font-size: 14px;
+        }
+
+        .auth-field input:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .auth-button {
+            width: 100%;
+            padding: 12px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 7px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .auth-button:hover {
+            background: #1d4ed8;
+        }
+
+        .auth-error {
+            color: #ef4444;
+            font-size: 13px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .logout-button {
+            margin-left: 15px;
+            padding: 8px 14px;
+            background: #1f2937;
+            color: #e5e7eb;
+            border: 1px solid #374151;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .logout-button:hover {
+            background: #374151;
+        }
+
+        /* ADMIN USER MANAGEMENT */
+
+            .admin-panel {
+                margin: 25px 30px;
+                padding: 22px;
+                background: #111827;
+                border: 1px solid #1f2937;
+                border-radius: 10px;
+            }
+
+            .admin-panel-header {
+                margin-bottom: 20px;
+            }
+
+            .admin-panel-header h2 {
+                font-size: 22px;
+                margin-bottom: 6px;
+            }
+
+            .admin-panel-header p {
+                color: #9ca3af;
+                font-size: 14px;
+            }
+
+            .admin-user-row {
+                display: grid;
+                grid-template-columns: 2fr 2fr 1fr;
+                align-items: center;
+                gap: 20px;
+                padding: 15px 16px;
+                margin-bottom: 10px;
+                background: #0b1120;
+                border: 1px solid #263247;
+                border-radius: 8px;
+            }
+
+            .admin-user-row:last-child {
+                margin-bottom: 0;
+            }
+
+            .admin-user-row strong {
+                display: block;
+                color: #f8fafc;
+                font-size: 15px;
+                margin-bottom: 4px;
+            }
+
+            .admin-user-row span {
+                color: #94a3b8;
+                font-size: 13px;
+            }
+
+            .admin-role {
+                color: #60a5fa !important;
+                font-weight: bold;
+            }
+
+            .admin-status {
+                color: #22c55e !important;
+                font-weight: bold;
+            }
+
+            .admin-create-user {
+                margin-top: 25px;
+                padding-top: 22px;
+                border-top: 1px solid #263247;
+            }
+
+            .admin-create-user h3 {
+                font-size: 18px;
+                margin-bottom: 6px;
+            }
+
+            .admin-create-user p {
+                color: #9ca3af;
+                font-size: 14px;
+            }
+
+            .admin-form-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 18px;
+                margin-top: 20px;
+            }
+
+            .admin-form-field {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .admin-form-field label {
+                margin-bottom: 7px;
+                color: #cbd5e1;
+                font-size: 13px;
+                font-weight: bold;
+            }
+
+            .admin-form-field input,
+            .admin-form-field select {
+                width: 100%;
+                padding: 11px 12px;
+                background: #0b1120;
+                color: #e5e7eb;
+                border: 1px solid #374151;
+                border-radius: 7px;
+                font-size: 14px;
+            }
+
+            .admin-form-field input:focus,
+            .admin-form-field select:focus {
+                outline: none;
+                border-color: #2563eb;
+            }
+
+            .admin-create-button {
+                margin-top: 20px;
+                padding: 11px 18px;
+                background: #2563eb;
+                color: white;
+                border: none;
+                border-radius: 7px;
+                font-size: 14px;
+                font-weight: bold;
+                cursor: pointer;
+            }
+
+            .admin-create-button:hover {
+                background: #1d4ed8;
+            }
+
+            .admin-create-message {
+                margin-top: 12px;
+                font-size: 13px;
+            }
 
         * {
             box-sizing: border-box;
@@ -533,14 +763,165 @@
 
     <header class="header">
 
-        <h1>🛡️ CloudSentinel</h1>
+    <h1>🛡️ CloudSentinel</h1>
+
+    <p>
+        Cloud Security Monitoring & Risk Intelligence Platform
+    </p>
+
+    <button
+        type="button"
+        class="logout-button"
+        onclick="logout()"
+    >
+        Logout
+    </button>
+
+</header>
+
+    <div id="authScreen" class="auth-screen">
+
+    <div class="auth-card">
+
+        <h2>🛡️ CloudSentinel</h2>
 
         <p>
-            Cloud Security Monitoring & Risk Intelligence Platform
+            SOC Analyst Authentication
         </p>
 
-    </header>
+        <form id="loginForm">
 
+            <div class="auth-field">
+
+                <label for="loginUsername">
+                    Username
+                </label>
+
+                <input
+                    type="text"
+                    id="loginUsername"
+                    placeholder="Enter username"
+                    required
+                >
+
+            </div>
+
+            <div class="auth-field">
+
+                <label for="loginPassword">
+                    Password
+                </label>
+
+                <input
+                    type="password"
+                    id="loginPassword"
+                    placeholder="Enter password"
+                    required
+                >
+
+            </div>
+
+            <button
+                type="submit"
+                class="auth-button"
+            >
+                Sign In
+            </button>
+
+            <div
+                id="loginError"
+                class="auth-error"
+            >
+                Invalid username or password.
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<div id="adminPanel" class="admin-panel" style="display: none;">
+
+    <div class="admin-panel-header">
+        <div>
+            <h2>Admin User Management</h2>
+            <p>Manage CloudSentinel SOC users and access roles.</p>
+        </div>
+    </div>
+
+    <div id="adminUsersList">
+    <p>Loading users...</p>
+</div>
+
+<div class="admin-create-user">
+
+    <div class="admin-panel-header">
+        <h3>Create New SOC User</h3>
+        <p>Add a new analyst or administrator to CloudSentinel.</p>
+    </div>
+
+    <form id="createUserForm">
+
+        <div class="admin-form-grid">
+
+            <div class="admin-form-field">
+                <label for="newUsername">Username</label>
+                <input
+                    type="text"
+                    id="newUsername"
+                    placeholder="Enter username"
+                    required
+                >
+            </div>
+
+            <div class="admin-form-field">
+                <label for="newEmail">Email</label>
+                <input
+                    type="email"
+                    id="newEmail"
+                    placeholder="Enter email"
+                    required
+                >
+            </div>
+
+            <div class="admin-form-field">
+                <label for="newPassword">Password</label>
+                <input
+                    type="password"
+                    id="newPassword"
+                    placeholder="Enter password"
+                    required
+                >
+            </div>
+
+            <div class="admin-form-field">
+                <label for="newRole">Role</label>
+                <select id="newRole" required>
+                    <option value="SOC_ANALYST">SOC Analyst</option>
+                    <option value="SOC_ADMIN">SOC Admin</option>
+                </select>
+            </div>
+
+        </div>
+
+        <button
+            type="submit"
+            class="admin-create-button"
+        >
+            Create User
+        </button>
+
+        <div
+            id="createUserMessage"
+            class="admin-create-message"
+        ></div>
+
+    </form>
+
+</div>
+
+</div>
 
     <main class="container">
 
@@ -1023,6 +1404,346 @@
 
 <script>
 
+const AUTH_URL =
+    "http://127.0.0.1:8000/auth/login";
+
+const TOKEN_KEY =
+    "cloudsentinel_access_token";
+
+
+function getAuthToken() {
+    return localStorage.getItem(TOKEN_KEY);
+}
+
+function getCurrentUserRole() {
+
+    const token = getAuthToken();
+
+    if (!token) {
+        return null;
+    }
+
+    try {
+
+        const payload = JSON.parse(
+            atob(token.split(".")[1])
+        );
+
+        return payload.role || null;
+
+    } catch (error) {
+
+        console.error(
+            "Failed to decode authentication token:",
+            error
+        );
+
+        return null;
+    }
+}
+
+
+function updateAdminPanel() {
+
+    const adminPanel =
+        document.getElementById("adminPanel");
+
+    if (!adminPanel) {
+        return;
+    }
+
+async function loadAdminUsers() {
+
+    const adminPanel =
+        document.getElementById("adminPanel");
+
+    const usersList =
+        document.getElementById("adminUsersList");
+
+    if (!adminPanel || !usersList) {
+        return;
+    }
+
+    if (getCurrentUserRole() !== "SOC_ADMIN") {
+        return;
+    }
+
+    usersList.innerHTML = "<p>Loading users...</p>";
+
+    try {
+
+        const response = await authFetch(
+            "http://127.0.0.1:8000/admin/users"
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                "Failed to load admin users"
+            );
+        }
+
+        const users = await response.json();
+
+        if (!users.length) {
+            usersList.innerHTML =
+                "<p>No users found.</p>";
+            return;
+        }
+
+        usersList.innerHTML = users.map(user => `
+            <div class="admin-user-row">
+
+                <div>
+                    <strong>${user.username}</strong>
+                    <span>${user.email}</span>
+                </div>
+
+                <div>
+                    <span class="admin-role">
+                        ${user.role}
+                    </span>
+                </div>
+
+                <div>
+                    <span class="admin-status">
+                        ${user.is_active ? "Active" : "Inactive"}
+                    </span>
+                </div>
+
+            </div>
+        `).join("");
+
+    } catch (error) {
+
+        console.error(
+            "Error loading admin users:",
+            error
+        );
+
+        usersList.innerHTML =
+            "<p>Unable to load users.</p>";
+    }
+}
+
+document
+    .getElementById("createUserForm")
+    .addEventListener("submit", async function(event) {
+
+        event.preventDefault();
+
+        const username =
+            document.getElementById("newUsername").value.trim();
+
+        const email =
+            document.getElementById("newEmail").value.trim();
+
+        const password =
+            document.getElementById("newPassword").value;
+
+        const role =
+            document.getElementById("newRole").value;
+
+        const messageElement =
+            document.getElementById("createUserMessage");
+
+        messageElement.textContent = "";
+        messageElement.style.color = "";
+
+        try {
+
+            const response = await authFetch(
+                "http://127.0.0.1:8000/admin/users",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        email: email,
+                        password: password,
+                        role: role
+                    })
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.detail || "Failed to create user"
+                );
+            }
+
+            messageElement.textContent =
+                "User created successfully.";
+
+            messageElement.style.color =
+                "#22c55e";
+
+            document.getElementById("createUserForm").reset();
+
+            await loadAdminUsers();
+
+        } catch (error) {
+
+            console.error(
+                "Error creating user:",
+                error
+            );
+
+            messageElement.textContent =
+                error.message || "Failed to create user.";
+
+            messageElement.style.color =
+                "#ef4444";
+        }
+
+    });
+
+    const role = getCurrentUserRole();
+        if (role === "SOC_ADMIN") {
+        adminPanel.style.display = "block";
+        loadAdminUsers();
+
+            } else {
+
+        adminPanel.style.display = "none";
+}
+}
+
+
+function showLogin() {
+
+    document.getElementById("authScreen").style.display = "flex";
+
+}
+
+
+function hideLogin() {
+
+    document.getElementById("authScreen").style.display = "none";
+
+}
+
+
+function logout() {
+
+    localStorage.removeItem(TOKEN_KEY);
+
+    updateAdminPanel();
+
+    showLogin();
+}
+
+
+async function authFetch(url, options = {}) {
+
+    const token = getAuthToken();
+
+    if (!token) {
+        showLogin();
+        throw new Error("Not authenticated");
+    }
+
+    const headers = new Headers(
+        options.headers || {}
+    );
+
+    headers.set(
+        "Authorization",
+        `Bearer ${token}`
+    );
+
+    const response = await fetch(url, {
+        ...options,
+        headers
+    });
+
+    if (response.status === 401) {
+
+        logout();
+
+        throw new Error(
+            "Authentication expired"
+        );
+
+    }
+
+    return response;
+}
+
+
+document
+    .getElementById("loginForm")
+    .addEventListener("submit", async function(event) {
+
+        event.preventDefault();
+
+        const username =
+            document.getElementById("loginUsername").value;
+
+        const password =
+            document.getElementById("loginPassword").value;
+
+        const errorElement =
+            document.getElementById("loginError");
+
+        errorElement.style.display = "none";
+
+        try {
+
+            const response = await fetch(
+                AUTH_URL,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(
+                    "Invalid username or password"
+                );
+            }
+
+            const data =
+                await response.json();
+
+            localStorage.setItem(
+            TOKEN_KEY,
+            data.access_token
+            );
+
+            updateAdminPanel();
+
+            hideLogin();
+
+            hideLogin();
+
+            await loadAlerts();
+            await loadMetrics();
+
+        } catch (error) {
+
+            console.error(
+                "Login failed:",
+                error
+            );
+
+            errorElement.style.display = "block";
+
+        }
+
+    });
 
         const API_URL =
     "http://127.0.0.1:8000/alerts";
@@ -1039,7 +1760,7 @@ async function loadMetrics() {
     try {
 
         const response =
-            await fetch(METRICS_URL);
+            await authFetch(METRICS_URL);
 
         if (!response.ok) {
             throw new Error("Metrics API request failed");
@@ -1099,7 +1820,7 @@ document.getElementById("averageResolutionTime").textContent =
             try {
 
                 const response =
-                    await fetch(API_URL);
+    await authFetch(API_URL);
 
 
                 if (!response.ok) {
@@ -1150,7 +1871,7 @@ document.getElementById("alertModal")
     });
 
         function updateDashboard(alerts) {
-    
+
             /* TOTAL ALERTS */
 
             document.getElementById("totalAlerts").textContent =
@@ -1402,7 +2123,7 @@ async function openAlertModal(alert) {
         alert.action ?? "-";
 
     document.getElementById("detailResource").textContent =
-    alert.resource ?? "-";    
+    alert.resource ?? "-";
 
     document.getElementById("detailTime").textContent =
         alert.created_at ?? "-";
@@ -1570,27 +2291,27 @@ function getRecommendation(alert) {
 function getInvestigationEvidence(alert) {
 
     if (alert.rule === "PRIVILEGE_ESCALATION") {
-        return `The action ${alert.action ?? "-"} can modify IAM permissions. 
-The activity was initiated by ${alert.user ?? "-"} from ${alert.source_ip ?? "-"} 
-against ${alert.resource ?? "-"}. The alert was classified as ${alert.risk_level ?? "-"} 
+        return `The action ${alert.action ?? "-"} can modify IAM permissions.
+The activity was initiated by ${alert.user ?? "-"} from ${alert.source_ip ?? "-"}
+against ${alert.resource ?? "-"}. The alert was classified as ${alert.risk_level ?? "-"}
 with a risk score of ${alert.risk_score ?? "-"}.`;
     }
 
     if (alert.rule === "SUSPICIOUS_IAM_ACTIVITY") {
-        return `The IAM action ${alert.action ?? "-"} was identified as suspicious. 
-The activity was initiated by ${alert.user ?? "-"} from ${alert.source_ip ?? "-"} 
-against ${alert.resource ?? "-"}. The alert carries a ${alert.risk_level ?? "-"} 
+        return `The IAM action ${alert.action ?? "-"} was identified as suspicious.
+The activity was initiated by ${alert.user ?? "-"} from ${alert.source_ip ?? "-"}
+against ${alert.resource ?? "-"}. The alert carries a ${alert.risk_level ?? "-"}
 risk level with a score of ${alert.risk_score ?? "-"}.`;
     }
 
     if (alert.rule === "MULTIPLE_FAILED_LOGINS") {
-        return `Multiple authentication failures were associated with ${alert.user ?? "-"} 
-from source IP ${alert.source_ip ?? "-"}. The event action was ${alert.action ?? "-"} 
+        return `Multiple authentication failures were associated with ${alert.user ?? "-"}
+from source IP ${alert.source_ip ?? "-"}. The event action was ${alert.action ?? "-"}
 and was classified as ${alert.risk_level ?? "-"} with a risk score of ${alert.risk_score ?? "-"}.`;
     }
 
-    return `This alert was generated by the ${alert.rule ?? "unknown"} detection rule 
-and classified as ${alert.risk_level ?? "-"} with a risk score of ${alert.risk_score ?? "-"}. 
+    return `This alert was generated by the ${alert.rule ?? "unknown"} detection rule
+and classified as ${alert.risk_level ?? "-"} with a risk score of ${alert.risk_score ?? "-"}.
 Review the associated user, source IP, action, and resource for supporting evidence.`;
 }
 
@@ -1640,8 +2361,25 @@ function applyFilters() {
 
             /* INITIAL LOAD */
 
-        loadAlerts();
-        loadMetrics();
+        /* INITIAL LOAD */
+
+const existingToken =
+    getAuthToken();
+
+if (existingToken) {
+
+    updateAdminPanel();
+
+    hideLogin();
+
+    loadAlerts();
+    loadMetrics();
+
+} else {
+
+    showLogin();
+
+}
 
     </script>
 
