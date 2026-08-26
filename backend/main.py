@@ -20,7 +20,10 @@ from database.alert_store import (
     get_user_by_username,
     get_users,
     create_audit_log,
-    get_audit_logs
+    get_audit_logs,
+    count_recent_failed_logins,
+    get_active_brute_force_alert,
+    create_brute_force_alert
 )
 from ingestion.api_ingestion import router as ingestion_router
 
@@ -160,11 +163,38 @@ def login(data: LoginRequest):
             details="Invalid password"
         )
 
+        failure_count = count_recent_failed_logins(
+            username=user["username"],
+            window_minutes=5
+        )
+
+        if failure_count >= 5:
+            existing_alert = get_active_brute_force_alert(
+                user["username"]
+            )
+
+            if existing_alert is None:
+                create_brute_force_alert(
+                    username=user["username"],
+                    failure_count=failure_count
+                )
+
+                create_audit_log(
+                    username=user["username"],
+                    role=user["role"],
+                    action="BRUTE_FORCE_DETECTED",
+                    target_type="AUTHENTICATION",
+                    target_id=str(user["id"]),
+                    details=(
+                        f"{failure_count} failed login attempts "
+                        "within 5 minutes"
+                    )
+                )
+
         raise HTTPException(
             status_code=401,
             detail="Invalid username or password"
         )
-
     access_token = create_access_token(
         user["username"],
         user["role"]

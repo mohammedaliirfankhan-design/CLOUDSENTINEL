@@ -597,3 +597,94 @@ def get_audit_logs(limit: int = 100):
         }
         for row in rows
     ]
+
+def count_recent_failed_logins(
+    username: str,
+    window_minutes: int = 5
+) -> int:
+    """Count failed login attempts for a username within a time window."""
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM audit_logs
+        WHERE username = ?
+          AND action = 'LOGIN_FAILED'
+          AND created_at >= datetime('now', ?)
+    """, (
+        username,
+        f"-{window_minutes} minutes"
+    ))
+
+    count = cursor.fetchone()[0]
+
+    connection.close()
+
+    return count
+
+def get_active_brute_force_alert(username: str):
+    """Return an existing unresolved brute-force alert for a username."""
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT a.id
+        FROM alerts a
+        LEFT JOIN investigations i
+            ON a.id = i.alert_id
+        WHERE a.rule = 'Brute Force Authentication Attempt'
+          AND a.user = ?
+          AND COALESCE(i.status, 'OPEN') != 'RESOLVED'
+        ORDER BY a.created_at DESC
+        LIMIT 1
+    """, (username,))
+
+    row = cursor.fetchone()
+
+    connection.close()
+
+    return row[0] if row else None
+
+def create_brute_force_alert(
+    username: str,
+    failure_count: int
+):
+    """Create a high-risk alert for repeated failed authentication attempts."""
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        INSERT INTO alerts (
+            event_id,
+            rule,
+            severity,
+            risk_score,
+            risk_level,
+            user,
+            source_ip,
+            action,
+            resource
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        f"AUTH-BRUTEFORCE-{username}",
+        "Brute Force Authentication Attempt",
+        "HIGH",
+        85,
+        "HIGH",
+        username,
+        None,
+        "LOGIN",
+        "Authentication"
+    ))
+
+    alert_id = cursor.lastrowid
+
+    connection.commit()
+    connection.close()
+
+    return alert_id
