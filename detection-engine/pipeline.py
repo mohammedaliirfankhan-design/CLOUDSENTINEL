@@ -6,8 +6,11 @@ sys.path.insert(0, ".")
 from models.event import SecurityEvent
 from detectors.iam_detector import detect_iam_activity
 from detectors.auth_detector import detect_auth_activity
+from detectors.source_ip_detector import detect_source_ip_activity
 from scoring.risk_scorer import calculate_risk
 from database.alert_store import initialize_database, insert_alert
+
+
 def process_event(event: SecurityEvent) -> dict | None:
     """
     Process a security event through detection and risk scoring.
@@ -20,18 +23,25 @@ def process_event(event: SecurityEvent) -> dict | None:
     if alert is None:
         alert = detect_auth_activity(event)
 
+    # Step 3: If authentication rule does not match,
+    # try suspicious source-IP detection
+    if alert is None:
+        alert = detect_source_ip_activity(event)
+
     # No suspicious activity detected
     if alert is None:
         return None
 
-    # Step 3: Calculate standardized risk
+    # Step 4: Calculate standardized risk
     risk = calculate_risk(alert)
 
-    # Step 4: Combine detection + risk information
+    # Step 5: Combine detection + risk information
     return {
         **alert,
         **risk
     }
+
+
 if __name__ == "__main__":
     from datetime import datetime, timezone
 
