@@ -26,7 +26,7 @@ def test_suspicious_event_creates_alert(monkeypatch):
         "event_type": "IAM",
         "action": "CreateAccessKey",
         "user": "test-admin",
-        "source_ip": "203.0.113.50",
+        "source_ip": "192.168.1.100",
         "resource": "user/test-admin"
     }
 
@@ -65,7 +65,7 @@ def test_normal_event_does_not_create_alert(monkeypatch):
         "event_type": "S3",
         "action": "GetObject",
         "user": "test-admin",
-        "source_ip": "203.0.113.50",
+        "source_ip": "192.168.1.100",
         "resource": "bucket/test-bucket/file.txt"
     }
 
