@@ -32,6 +32,19 @@ def initialize_database():
     """)
 
     cursor.execute("""
+        CREATE TABLE IF NOT EXISTS audit_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            role TEXT NOT NULL,
+            action TEXT NOT NULL,
+            target_type TEXT,
+            target_id TEXT,
+            details TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS investigations (
             alert_id INTEGER PRIMARY KEY,
             status TEXT NOT NULL DEFAULT 'OPEN',
@@ -506,6 +519,81 @@ def get_users():
             "role": row[3],
             "is_active": bool(row[4]),
             "created_at": row[5]
+        }
+        for row in rows
+    ]
+
+def create_audit_log(
+    username: str,
+    role: str,
+    action: str,
+    target_type: str | None = None,
+    target_id: str | None = None,
+    details: str | None = None
+):
+    """Create an audit log entry for an authenticated action."""
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        INSERT INTO audit_logs (
+            username,
+            role,
+            action,
+            target_type,
+            target_id,
+            details
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (
+        username,
+        role,
+        action,
+        target_type,
+        target_id,
+        details
+    ))
+
+    connection.commit()
+    connection.close()
+
+
+def get_audit_logs(limit: int = 100):
+    """Retrieve recent audit log entries."""
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT
+            id,
+            username,
+            role,
+            action,
+            target_type,
+            target_id,
+            details,
+            created_at
+        FROM audit_logs
+        ORDER BY created_at DESC, id DESC
+        LIMIT ?
+    """, (limit,))
+
+    rows = cursor.fetchall()
+
+    connection.close()
+
+    return [
+        {
+            "id": row[0],
+            "username": row[1],
+            "role": row[2],
+            "action": row[3],
+            "target_type": row[4],
+            "target_id": row[5],
+            "details": row[6],
+            "created_at": row[7]
         }
         for row in rows
     ]
