@@ -18,7 +18,9 @@ from database.alert_store import (
     get_investigation_history,
     create_user,
     get_user_by_username,
-    get_users
+    get_users,
+    create_audit_log,
+    get_audit_logs
 )
 from ingestion.api_ingestion import router as ingestion_router
 
@@ -119,18 +121,45 @@ def login(data: LoginRequest):
     user = get_user_by_username(username)
 
     if user is None:
+        create_audit_log(
+            username=username,
+            role="UNKNOWN",
+            action="LOGIN_FAILED",
+            target_type="AUTHENTICATION",
+            target_id=None,
+            details="Unknown username"
+        )
+
         raise HTTPException(
             status_code=401,
             detail="Invalid username or password"
         )
 
     if not user["is_active"]:
+        create_audit_log(
+            username=user["username"],
+            role=user["role"],
+            action="LOGIN_FAILED",
+            target_type="AUTHENTICATION",
+            target_id=str(user["id"]),
+            details="Login attempted for inactive account"
+        )
+
         raise HTTPException(
             status_code=403,
             detail="User account is inactive"
         )
 
     if not verify_password(password, user["password_hash"]):
+        create_audit_log(
+            username=user["username"],
+            role=user["role"],
+            action="LOGIN_FAILED",
+            target_type="AUTHENTICATION",
+            target_id=str(user["id"]),
+            details="Invalid password"
+        )
+
         raise HTTPException(
             status_code=401,
             detail="Invalid username or password"
@@ -139,6 +168,15 @@ def login(data: LoginRequest):
     access_token = create_access_token(
         user["username"],
         user["role"]
+    )
+
+    create_audit_log(
+        username=user["username"],
+        role=user["role"],
+        action="LOGIN_SUCCESS",
+        target_type="AUTHENTICATION",
+        target_id=str(user["id"]),
+        details="Successful user login"
     )
 
     return {
@@ -217,6 +255,18 @@ def save_investigation_endpoint(
         assigned_analyst
     )
 
+    create_audit_log(
+        username=current_user["username"],
+        role=current_user["role"],
+        action="UPDATE_INVESTIGATION",
+        target_type="ALERT",
+        target_id=str(alert_id),
+        details=(
+            f"Status set to {status}; "
+            f"assigned analyst: {assigned_analyst or 'Unassigned'}"
+        )
+    )
+
     return {
         "message": "Investigation saved successfully",
         "alert_id": alert_id,
@@ -253,6 +303,12 @@ def get_users_endpoint(
 ):
     return get_users()
 
+@app.get("/admin/audit-logs")
+def get_audit_logs_endpoint(
+    current_user: dict = Depends(require_admin)
+):
+    return get_audit_logs()
+
 @app.post("/admin/users")
 def create_admin_user(
     data: AdminCreateUserRequest,
@@ -277,6 +333,15 @@ def create_admin_user(
         data.email,
         password_hash,
         data.role
+    )
+
+    create_audit_log(
+        username=current_user["username"],
+        role=current_user["role"],
+        action="CREATE_USER",
+        target_type="USER",
+        target_id=str(user_id),
+        details=f"Created user '{data.username}' with role {data.role}"
     )
 
     return {

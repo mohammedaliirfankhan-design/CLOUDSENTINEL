@@ -237,7 +237,53 @@
                 margin-top: 12px;
                 font-size: 13px;
             }
+            .admin-audit-panel {
+                margin-top: 25px;
+                padding-top: 22px;
+                border-top: 1px solid #1f2937;
+            }
 
+            .admin-audit-row {
+                display: grid;
+                grid-template-columns: 1.2fr 1fr 1.2fr 2fr;
+                align-items: center;
+                gap: 20px;
+                padding: 15px 16px;
+                margin-bottom: 10px;
+                background: #0b1120;
+                border: 1px solid #263247;
+                border-radius: 8px;
+            }
+
+            .admin-audit-row:last-child {
+                margin-bottom: 0;
+            }
+
+            .admin-audit-row strong {
+                display: block;
+                color: #f8fafc;
+                font-size: 14px;
+                margin-bottom: 4px;
+            }
+
+            .admin-audit-row span {
+                color: #94a3b8;
+                font-size: 13px;
+            }
+
+            .audit-action {
+                color: #60a5fa !important;
+                font-weight: bold;
+            }
+
+            .audit-role {
+                color: #a78bfa !important;
+                font-weight: bold;
+            }
+
+            .audit-details {
+                color: #cbd5e1 !important;
+            }
         * {
             box-sizing: border-box;
             margin: 0;
@@ -921,6 +967,21 @@
 
 </div>
 
+<div class="admin-audit-panel">
+
+    <div class="admin-panel-header">
+        <div>
+            <h3>Audit Log</h3>
+            <p>Review security and administrative activity across CloudSentinel.</p>
+        </div>
+    </div>
+
+    <div id="adminAuditList">
+        <p>Loading audit logs...</p>
+    </div>
+
+</div>
+
 </div>
 
     <main class="container">
@@ -1452,6 +1513,21 @@ function updateAdminPanel() {
         return;
     }
 
+    const role = getCurrentUserRole();
+
+    if (role === "SOC_ADMIN") {
+
+        adminPanel.style.display = "block";
+
+        loadAdminUsers();
+        loadAdminAuditLogs();
+
+    } else {
+
+        adminPanel.style.display = "none";
+    }
+}
+
 async function loadAdminUsers() {
 
     const adminPanel =
@@ -1524,6 +1600,88 @@ async function loadAdminUsers() {
             "<p>Unable to load users.</p>";
     }
 }
+
+
+
+async function loadAdminAuditLogs() {
+
+    const auditList =
+        document.getElementById("adminAuditList");
+
+    if (!auditList) {
+        return;
+    }
+
+    if (getCurrentUserRole() !== "SOC_ADMIN") {
+        return;
+    }
+
+    auditList.innerHTML =
+        "<p>Loading audit logs...</p>";
+
+    try {
+
+        const response = await authFetch(
+            "http://127.0.0.1:8000/admin/audit-logs"
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                "Failed to load audit logs"
+            );
+        }
+
+        const logs = await response.json();
+
+        if (!logs.length) {
+            auditList.innerHTML =
+                "<p>No audit logs available.</p>";
+            return;
+        }
+
+        auditList.innerHTML = logs.map(log => `
+            <div class="admin-audit-row">
+
+                <div>
+                    <strong>${log.username}</strong>
+                    <span>${log.created_at}</span>
+                </div>
+
+                <div>
+                    <span class="audit-role">
+                        ${log.role}
+                    </span>
+                </div>
+
+                <div>
+                    <span class="audit-action">
+                        ${log.action}
+                    </span>
+                </div>
+
+                <div>
+                    <span class="audit-details">
+                        ${log.details || "-"}
+                    </span>
+                </div>
+
+            </div>
+        `).join("");
+
+    } catch (error) {
+
+        console.error(
+            "Error loading audit logs:",
+            error
+        );
+
+        auditList.innerHTML =
+            "<p>Unable to load audit logs.</p>";
+    }
+}
+
+document
+    .getElementById("createUserForm")
 
 document
     .getElementById("createUserForm")
@@ -1600,18 +1758,6 @@ document
         }
 
     });
-
-    const role = getCurrentUserRole();
-        if (role === "SOC_ADMIN") {
-        adminPanel.style.display = "block";
-        loadAdminUsers();
-
-            } else {
-
-        adminPanel.style.display = "none";
-}
-}
-
 
 function showLogin() {
 
