@@ -25,6 +25,12 @@ SUSPICIOUS_AUTH_ACTIONS = {
 }
 
 
+SUSPICIOUS_SOURCE_IPS = {
+    "203.0.113.10",
+    "203.0.113.50",
+}
+
+
 IAM_RULE = {
     "name": "SUSPICIOUS_IAM_ACTIVITY",
     "severity": "HIGH",
@@ -41,4 +47,10 @@ AUTH_RULE = {
     "name": "MULTIPLE_FAILED_LOGINS",
     "severity": "MEDIUM",
     "risk_score": 50,
+}
+
+SOURCE_IP_RULE = {
+    "name": "SUSPICIOUS_SOURCE_IP",
+    "severity": "HIGH",
+    "risk_score": 80,
 }
