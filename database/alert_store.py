@@ -53,6 +53,18 @@ def initialize_database():
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE,
+            email TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'SOC_ANALYST',
+            is_active INTEGER NOT NULL DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
     # Add resolved_at to existing databases if the column is missing
     cursor.execute("PRAGMA table_info(investigations)")
 
@@ -393,3 +405,107 @@ def get_soc_metrics():
             else 0
         )
     }
+def create_user(
+    username: str,
+    email: str,
+    password_hash: str,
+    role: str = "SOC_ANALYST"
+):
+    """Create a new CloudSentinel user."""
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        INSERT INTO users (
+            username,
+            email,
+            password_hash,
+            role
+        )
+        VALUES (?, ?, ?, ?)
+    """, (
+        username,
+        email,
+        password_hash,
+        role
+    ))
+
+    connection.commit()
+
+    user_id = cursor.lastrowid
+
+    connection.close()
+
+    return user_id
+
+
+def get_user_by_username(username: str):
+    """Retrieve an active user by username."""
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT
+            id,
+            username,
+            email,
+            password_hash,
+            role,
+            is_active,
+            created_at
+        FROM users
+        WHERE username = ?
+    """, (username,))
+
+    user = cursor.fetchone()
+
+    connection.close()
+
+    if user is None:
+        return None
+
+    return {
+        "id": user[0],
+        "username": user[1],
+        "email": user[2],
+        "password_hash": user[3],
+        "role": user[4],
+        "is_active": bool(user[5]),
+        "created_at": user[6]
+    }
+
+def get_users():
+    """Retrieve all CloudSentinel users without exposing password hashes."""
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT
+            id,
+            username,
+            email,
+            role,
+            is_active,
+            created_at
+        FROM users
+        ORDER BY id
+    """)
+
+    rows = cursor.fetchall()
+
+    connection.close()
+
+    return [
+        {
+            "id": row[0],
+            "username": row[1],
+            "email": row[2],
+            "role": row[3],
+            "is_active": bool(row[4]),
+            "created_at": row[5]
+        }
+        for row in rows
+    ]
