@@ -1,4 +1,4 @@
-import sqlite3
+﻿import sqlite3
 
 
 DATABASE_NAME = "cloudsentinel.db"
@@ -78,6 +78,47 @@ def initialize_database():
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            type TEXT NOT NULL,
+            severity TEXT NOT NULL DEFAULT 'INFO',
+            title TEXT NOT NULL,
+            message TEXT NOT NULL,
+            alert_id INTEGER,
+            is_read INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id),
+            FOREIGN KEY (alert_id) REFERENCES alerts(id)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS security_findings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            finding_id TEXT NOT NULL,
+            title TEXT NOT NULL,
+            severity TEXT NOT NULL,
+            resource TEXT,
+            description TEXT NOT NULL,
+            recommendation TEXT,
+            evidence TEXT,
+            source TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'OPEN',
+            detected_at TIMESTAMP NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(finding_id, resource)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS aws_processed_events (
+            event_id TEXT PRIMARY KEY,
+            processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
     # Add resolved_at to existing databases if the column is missing
     cursor.execute("PRAGMA table_info(investigations)")
 
@@ -134,6 +175,42 @@ def initialize_database():
     connection.commit()
     connection.close()
 
+def is_aws_event_processed(event_id: str) -> bool:
+    """Return True if an AWS CloudTrail event was already processed."""
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT 1
+        FROM aws_processed_events
+        WHERE event_id = ?
+        LIMIT 1
+    """, (event_id,))
+
+    processed = cursor.fetchone() is not None
+
+    connection.close()
+
+    return processed
+
+
+def mark_aws_event_processed(event_id: str) -> None:
+    """Mark an AWS CloudTrail event as processed."""
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        INSERT OR IGNORE INTO aws_processed_events (
+            event_id
+        )
+        VALUES (?)
+    """, (event_id,))
+
+    connection.commit()
+    connection.close()
+
 def insert_alert(alert: dict):
     """Store a processed security alert in the database."""
 
@@ -168,8 +245,12 @@ def insert_alert(alert: dict):
         ),
     )
 
+    alert_id = cursor.lastrowid
+
     connection.commit()
     connection.close()
+
+    return alert_id
 
 def get_alerts():
     connection = get_connection()
@@ -208,10 +289,20 @@ def save_investigation(
     analyst_notes: str,
     assigned_analyst: str
 ):
-    """Save or update an analyst investigation and record its history."""
+    """Save or update an analyst investigation and record status transitions."""
 
     connection = get_connection()
     cursor = connection.cursor()
+
+    # Check the current investigation state before updating it.
+    cursor.execute("""
+        SELECT status
+        FROM investigations
+        WHERE alert_id = ?
+    """, (alert_id,))
+
+    existing = cursor.fetchone()
+    previous_status = existing[0] if existing else None
 
     if status == "RESOLVED":
         cursor.execute("""
@@ -245,15 +336,21 @@ def save_investigation(
                 status,
                 analyst_notes,
                 assigned_analyst,
-                updated_at
+                updated_at,
+                resolved_at
             )
-            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, NULL)
             ON CONFLICT(alert_id)
             DO UPDATE SET
                 status = excluded.status,
                 analyst_notes = excluded.analyst_notes,
                 assigned_analyst = excluded.assigned_analyst,
-                updated_at = CURRENT_TIMESTAMP
+                updated_at = CURRENT_TIMESTAMP,
+                resolved_at = CASE
+                    WHEN excluded.status != 'RESOLVED'
+                    THEN NULL
+                    ELSE investigations.resolved_at
+                END
         """, (
             alert_id,
             status,
@@ -261,22 +358,22 @@ def save_investigation(
             assigned_analyst
         ))
 
-    # Record every investigation status change in history,
-    # including RESOLVED.
-    cursor.execute("""
-        INSERT INTO investigation_history (
+    # Record history only when the investigation status actually changes.
+    if previous_status != status or analyst_notes.strip():
+        cursor.execute("""
+            INSERT INTO investigation_history (
+                alert_id,
+                status,
+                analyst_notes,
+                assigned_analyst
+            )
+            VALUES (?, ?, ?, ?)
+        """, (
             alert_id,
             status,
             analyst_notes,
             assigned_analyst
-        )
-        VALUES (?, ?, ?, ?)
-    """, (
-        alert_id,
-        status,
-        analyst_notes,
-        assigned_analyst
-    ))
+        ))
 
     connection.commit()
     connection.close()
@@ -598,6 +695,177 @@ def get_audit_logs(limit: int = 100):
         for row in rows
     ]
 
+
+def create_notification(
+    user_id: int,
+    notification_type: str,
+    severity: str,
+    title: str,
+    message: str,
+    alert_id: int | None = None
+):
+    """Create a notification for a specific CloudSentinel user."""
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        INSERT INTO notifications (
+            user_id,
+            type,
+            severity,
+            title,
+            message,
+            alert_id
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (
+        user_id,
+        notification_type,
+        severity,
+        title,
+        message,
+        alert_id
+    ))
+
+    notification_id = cursor.lastrowid
+
+    connection.commit()
+    connection.close()
+
+    return notification_id
+
+
+def get_notifications(
+    user_id: int,
+    unread_only: bool = False,
+    limit: int = 50
+):
+    """Retrieve notifications for a specific user."""
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    if unread_only:
+        cursor.execute("""
+            SELECT
+                id,
+                type,
+                severity,
+                title,
+                message,
+                alert_id,
+                is_read,
+                created_at
+            FROM notifications
+            WHERE user_id = ?
+              AND is_read = 0
+            ORDER BY created_at DESC, id DESC
+            LIMIT ?
+        """, (user_id, limit))
+    else:
+        cursor.execute("""
+            SELECT
+                id,
+                type,
+                severity,
+                title,
+                message,
+                alert_id,
+                is_read,
+                created_at
+            FROM notifications
+            WHERE user_id = ?
+            ORDER BY created_at DESC, id DESC
+            LIMIT ?
+        """, (user_id, limit))
+
+    rows = cursor.fetchall()
+
+    connection.close()
+
+    return [
+        {
+            "id": row[0],
+            "type": row[1],
+            "severity": row[2],
+            "title": row[3],
+            "message": row[4],
+            "alert_id": row[5],
+            "is_read": bool(row[6]),
+            "created_at": row[7]
+        }
+        for row in rows
+    ]
+
+
+def get_unread_notification_count(user_id: int):
+    """Return the unread notification count for a user."""
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM notifications
+        WHERE user_id = ?
+          AND is_read = 0
+    """, (user_id,))
+
+    count = cursor.fetchone()[0]
+
+    connection.close()
+
+    return count
+
+
+def mark_notification_read(
+    notification_id: int,
+    user_id: int
+):
+    """Mark one notification as read for its owning user."""
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        UPDATE notifications
+        SET is_read = 1
+        WHERE id = ?
+          AND user_id = ?
+    """, (
+        notification_id,
+        user_id
+    ))
+
+    updated = cursor.rowcount
+
+    connection.commit()
+    connection.close()
+
+    return updated
+
+
+def mark_all_notifications_read(user_id: int):
+    """Mark all notifications belonging to a user as read."""
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        UPDATE notifications
+        SET is_read = 1
+        WHERE user_id = ?
+          AND is_read = 0
+    """, (user_id,))
+
+    updated = cursor.rowcount
+
+    connection.commit()
+    connection.close()
+
+    return updated
+
 def count_recent_failed_logins(
     username: str,
     window_minutes: int = 5
@@ -688,3 +956,321 @@ def create_brute_force_alert(
     connection.close()
 
     return alert_id
+
+
+
+def get_events():
+    """Retrieve security events stored in the alert event dataset."""
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT
+            id,
+            event_id,
+            rule,
+            severity,
+            risk_score,
+            risk_level,
+            user,
+            source_ip,
+            action,
+            resource,
+            created_at
+        FROM alerts
+        ORDER BY created_at DESC, id DESC
+    """)
+
+    rows = cursor.fetchall()
+
+    connection.close()
+
+    return [
+        {
+            "id": row[0],
+            "event_id": row[1],
+            "rule": row[2],
+            "severity": row[3],
+            "risk_score": row[4],
+            "risk_level": row[5],
+            "user": row[6],
+            "source_ip": row[7],
+            "action": row[8],
+            "resource": row[9],
+            "created_at": row[10],
+        }
+        for row in rows
+    ]
+
+def save_security_finding(finding: dict) -> int:
+    """Store or update a CloudSentinel CSPM finding."""
+
+    import json
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        INSERT INTO security_findings (
+            finding_id,
+            title,
+            severity,
+            resource,
+            description,
+            recommendation,
+            evidence,
+            source,
+            status,
+            detected_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(finding_id, resource)
+        DO UPDATE SET
+            title = excluded.title,
+            severity = excluded.severity,
+            description = excluded.description,
+            recommendation = excluded.recommendation,
+            evidence = excluded.evidence,
+            source = excluded.source,
+            detected_at = excluded.detected_at
+    """, (
+        finding.get("finding_id"),
+        finding.get("title"),
+        finding.get("severity"),
+        finding.get("resource"),
+        finding.get("description"),
+        finding.get("recommendation"),
+        json.dumps(
+            finding.get("evidence", {}),
+            default=str
+        ),
+        finding.get("source"),
+        finding.get("status", "OPEN"),
+        finding.get("detected_at"),
+    ))
+
+    connection.commit()
+
+    cursor.execute("""
+        SELECT id
+        FROM security_findings
+        WHERE finding_id = ?
+          AND resource IS ?
+    """, (
+        finding.get("finding_id"),
+        finding.get("resource"),
+    ))
+
+    row = cursor.fetchone()
+
+    connection.close()
+
+    return row[0] if row else 0
+
+
+def get_security_findings():
+    """Retrieve all CloudSentinel CSPM findings."""
+
+    import json
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT
+            id,
+            finding_id,
+            title,
+            severity,
+            resource,
+            description,
+            recommendation,
+            evidence,
+            source,
+            status,
+            detected_at,
+            created_at
+        FROM security_findings
+        ORDER BY
+            CASE severity
+                WHEN 'CRITICAL' THEN 1
+                WHEN 'HIGH' THEN 2
+                WHEN 'MEDIUM' THEN 3
+                WHEN 'LOW' THEN 4
+                ELSE 5
+            END,
+            detected_at DESC
+    """)
+
+    rows = cursor.fetchall()
+
+    connection.close()
+
+    columns = [
+        "id",
+        "finding_id",
+        "title",
+        "severity",
+        "resource",
+        "description",
+        "recommendation",
+        "evidence",
+        "source",
+        "status",
+        "detected_at",
+        "created_at",
+    ]
+
+    findings = []
+
+    for row in rows:
+        finding = dict(zip(columns, row))
+
+        try:
+            finding["evidence"] = json.loads(
+                finding["evidence"]
+            )
+        except (TypeError, json.JSONDecodeError):
+            finding["evidence"] = {}
+
+        findings.append(finding)
+
+    return findings
+
+
+def get_security_finding(
+    finding_database_id: int,
+):
+    """Retrieve one CSPM finding by database ID."""
+
+    import json
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT
+            id,
+            finding_id,
+            title,
+            severity,
+            resource,
+            description,
+            recommendation,
+            evidence,
+            source,
+            status,
+            detected_at,
+            created_at
+        FROM security_findings
+        WHERE id = ?
+    """, (
+        finding_database_id,
+    ))
+
+    row = cursor.fetchone()
+
+    connection.close()
+
+    if row is None:
+        return None
+
+    columns = [
+        "id",
+        "finding_id",
+        "title",
+        "severity",
+        "resource",
+        "description",
+        "recommendation",
+        "evidence",
+        "source",
+        "status",
+        "detected_at",
+        "created_at",
+    ]
+
+    finding = dict(zip(columns, row))
+
+    try:
+        finding["evidence"] = json.loads(
+            finding["evidence"]
+        )
+    except (TypeError, json.JSONDecodeError):
+        finding["evidence"] = {}
+
+    return finding
+
+def update_security_finding_status(
+    finding_database_id: int,
+    status: str,
+):
+    """Update the status of a CloudSentinel CSPM finding."""
+
+    status = str(status).upper()
+
+    if status not in {"OPEN", "RESOLVED"}:
+        raise ValueError(
+            "Invalid finding status. Use OPEN or RESOLVED."
+        )
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        UPDATE security_findings
+        SET status = ?
+        WHERE id = ?
+    """, (
+        status,
+        finding_database_id,
+    ))
+
+    connection.commit()
+
+    updated = cursor.rowcount > 0
+
+    connection.close()
+
+    return updated
+
+
+def get_security_finding_metrics():
+    """Return summary metrics for CSPM findings."""
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT severity, COUNT(*)
+        FROM security_findings
+        WHERE status = 'OPEN'
+        GROUP BY severity
+    """)
+
+    rows = cursor.fetchall()
+
+    connection.close()
+
+    metrics = {
+        "total": 0,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0,
+    }
+
+    for severity, count in rows:
+
+        metrics["total"] += count
+
+        key = str(
+            severity
+        ).lower()
+
+        if key in metrics:
+            metrics[key] = count
+
+    return metrics
+
