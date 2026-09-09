@@ -4,6 +4,7 @@ from datetime import datetime
 sys.path.insert(0, "detection-engine")
 
 from aws.collector import AWSCloudTrailCollector
+from aws.config import get_aws_profile, get_aws_region
 from models.event import SecurityEvent
 from pipeline import process_event
 
@@ -21,18 +22,33 @@ class AWSCloudTrailProcessor:
     Collect real AWS CloudTrail events and process them
     through the existing CloudSentinel detection pipeline.
 
+    AWS profile and region are resolved through the centralized
+    CloudSentinel AWS configuration layer.
+
     Events are tracked using the aws_processed_events table
     to prevent duplicate processing.
     """
 
     def __init__(
         self,
-        profile_name: str = "cloudsentinel-audit",
-        region_name: str = "ap-south-1",
+        profile_name: str | None = None,
+        region_name: str | None = None,
     ) -> None:
+        self.profile_name = (
+            profile_name
+            if profile_name is not None
+            else get_aws_profile()
+        )
+
+        self.region_name = (
+            region_name
+            if region_name is not None
+            else get_aws_region()
+        )
+
         self.collector = AWSCloudTrailCollector(
-            profile_name=profile_name,
-            region_name=region_name,
+            profile_name=self.profile_name,
+            region_name=self.region_name,
         )
 
     def to_security_event(
