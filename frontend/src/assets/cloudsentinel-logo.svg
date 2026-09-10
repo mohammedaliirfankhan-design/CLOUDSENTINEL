@@ -1,0 +1,75 @@
+﻿<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+    <defs>
+        <linearGradient
+            id="cloudsentinel-blue"
+            x1="48"
+            y1="55"
+            x2="208"
+            y2="205"
+            gradientUnits="userSpaceOnUse"
+        >
+            <stop offset="0" stop-color="#60A5FA"/>
+            <stop offset="0.5" stop-color="#3B82F6"/>
+            <stop offset="1" stop-color="#2563EB"/>
+        </linearGradient>
+    </defs>
+
+    <!-- CLOUD -->
+    <path
+        d="
+            M101 181
+            H58
+            C39 181 25 167 25 149
+            C25 131 39 117 57 116
+            C63 88 87 67 117 67
+            C146 67 171 88 177 116
+            C178 116 180 116 182 116
+            C201 116 216 131 216 150
+            C216 168 201 181 182 181
+            H155
+        "
+        stroke="url(#cloudsentinel-blue)"
+        stroke-width="11"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+    />
+
+    <!-- LARGE CENTERED SHIELD -->
+    <path
+        d="
+            M128 96
+            L164 111
+            V145
+            C164 171
+            150 193
+            128 208
+            C106 193
+            92 171
+            92 145
+            V111
+            L128 96
+            Z
+        "
+        fill="#07172F"
+        stroke="url(#cloudsentinel-blue)"
+        stroke-width="9"
+        stroke-linejoin="round"
+    />
+
+    <!-- KEYHOLE -->
+    <circle
+        cx="128"
+        cy="137"
+        r="9"
+        fill="url(#cloudsentinel-blue)"
+    />
+
+    <path
+        d="M128 147V169"
+        stroke="url(#cloudsentinel-blue)"
+        stroke-width="9"
+        stroke-linecap="round"
+    />
+
+</svg>

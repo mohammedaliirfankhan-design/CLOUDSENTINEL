@@ -16,3 +16,8 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# Windows deployment build/runtime artifacts
+deployment/windows/build/
+deployment/windows/dist/
+deployment/windows/logs/
