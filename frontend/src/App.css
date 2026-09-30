@@ -5670,3 +5670,1332 @@
         width: 100%;
     }
 }
+
+/* =========================================================
+   CSPM FINDINGS 2.0
+   ========================================================= */
+
+.findings-page {
+    position: relative;
+    width: 100%;
+    min-height: 100%;
+    padding: 42px 44px 56px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.findings-page::before,
+.findings-page::after {
+    display: none !important;
+    content: none !important;
+}
+
+.findings-page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 32px;
+    margin-bottom: 32px;
+}
+
+.section-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    color: #3d91ff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+}
+
+.section-eyebrow::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #3d91ff;
+    box-shadow: 0 0 10px rgba(61, 145, 255, 0.55);
+}
+
+.findings-page-header h2 {
+    margin: 0;
+    color: #f5f8ff;
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.6px;
+}
+
+.findings-page-header p {
+    margin: 10px 0 0;
+    max-width: 680px;
+    color: #8492a8;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.findings-live-status {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 220px;
+    padding: 12px 16px;
+    border: 1px solid #1c2a3d;
+    border-radius: 10px;
+    background: #0d1521;
+}
+
+.findings-live-status .status-dot {
+    width: 9px;
+    height: 9px;
+    flex: 0 0 9px;
+    border-radius: 50%;
+    background: #22c978;
+    box-shadow: 0 0 10px rgba(34, 201, 120, 0.55);
+}
+
+.findings-live-status div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.findings-live-status strong {
+    color: #dce7f7;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.findings-live-status span:not(.status-dot) {
+    color: #64748b;
+    font-size: 11px;
+}
+
+
+/* ---------------------------------------------------------
+   SUMMARY
+   --------------------------------------------------------- */
+
+.finding-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.finding-summary-card {
+    position: relative;
+    min-height: 126px;
+    padding: 18px 20px;
+    border: 1px solid #1a293c;
+    border-radius: 10px;
+    background: #0d1521;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.finding-summary-card::after {
+    content: "";
+    position: absolute;
+    right: -24px;
+    bottom: -42px;
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: rgba(61, 145, 255, 0.035);
+}
+
+.finding-summary-card.critical {
+    border-color: rgba(239, 68, 68, 0.22);
+}
+
+.finding-summary-card.high {
+    border-color: rgba(245, 158, 11, 0.22);
+}
+
+.finding-summary-card.medium {
+    border-color: rgba(234, 179, 8, 0.18);
+}
+
+.finding-summary-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #738197;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.3px;
+}
+
+.finding-summary-card > strong {
+    display: block;
+    margin-top: 13px;
+    color: #f4f7fc;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.finding-summary-card > small {
+    display: block;
+    margin-top: 8px;
+    color: #68778d;
+    font-size: 11px;
+}
+
+.finding-summary-indicator {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #3d91ff;
+    box-shadow: 0 0 8px rgba(61, 145, 255, 0.45);
+}
+
+.finding-summary-indicator.critical {
+    background: #ef4444;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.45);
+}
+
+.finding-summary-indicator.high {
+    background: #f59e0b;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.45);
+}
+
+.finding-summary-indicator.medium {
+    background: #eab308;
+    box-shadow: 0 0 8px rgba(234, 179, 8, 0.4);
+}
+
+
+/* ---------------------------------------------------------
+   FINDINGS PANEL
+   --------------------------------------------------------- */
+
+.findings-panel {
+    border: 1px solid #19283b;
+    border-radius: 12px;
+    background: #0b131f;
+    overflow: hidden;
+}
+
+.findings-panel-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 22px 24px;
+    border-bottom: 1px solid #172438;
+}
+
+.findings-panel-header .section-eyebrow {
+    margin-bottom: 7px;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+}
+
+.findings-panel-header .section-eyebrow::before {
+    width: 7px;
+    height: 7px;
+}
+
+.findings-panel-header h3 {
+    margin: 0;
+    color: #edf3fb;
+    font-size: 18px;
+    font-weight: 650;
+}
+
+.findings-panel-header p {
+    margin: 6px 0 0;
+    color: #6e7d93;
+    font-size: 12px;
+}
+
+.findings-queue-meta {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding-top: 8px;
+}
+
+.findings-queue-meta span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #65748a;
+    font-size: 11px;
+}
+
+.findings-queue-meta strong {
+    color: #d9e4f3;
+    font-size: 14px;
+}
+
+
+/* ---------------------------------------------------------
+   TOOLBAR
+   --------------------------------------------------------- */
+
+.findings-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 24px;
+    border-bottom: 1px solid #172438;
+    background: #0c1522;
+}
+
+.finding-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    max-width: 420px;
+}
+
+.finding-search svg {
+    position: absolute;
+    left: 13px;
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: #63748a;
+    stroke-width: 1.8;
+    pointer-events: none;
+}
+
+.finding-search input {
+    width: 100%;
+    height: 38px;
+    padding: 0 14px 0 38px;
+    border: 1px solid #223249;
+    border-radius: 7px;
+    outline: none;
+    background: #0a121d;
+    color: #dce7f5;
+    font-size: 12px;
+    box-sizing: border-box;
+    transition:
+        border-color 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+.finding-search input::placeholder {
+    color: #536277;
+}
+
+.finding-search input:focus {
+    border-color: #2f7fe4;
+    box-shadow: 0 0 0 2px rgba(47, 127, 228, 0.12);
+}
+
+.finding-filters {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.finding-filters select {
+    height: 38px;
+    min-width: 142px;
+    padding: 0 32px 0 11px;
+    border: 1px solid #223249;
+    border-radius: 7px;
+    outline: none;
+    background: #0a121d;
+    color: #9cabc0;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.finding-filters select:focus {
+    border-color: #2f7fe4;
+}
+
+.finding-clear-filters,
+.empty-findings-action {
+    height: 38px;
+    padding: 0 13px;
+    border: 1px solid #29425f;
+    border-radius: 7px;
+    background: #102035;
+    color: #6da9f5;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.finding-clear-filters:hover,
+.empty-findings-action:hover {
+    border-color: #3a6fa8;
+    background: #132943;
+}
+
+
+/* ---------------------------------------------------------
+   TABLE
+   --------------------------------------------------------- */
+
+.findings-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.findings-table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: collapse;
+    table-layout: auto;
+}
+
+.findings-table thead th {
+    height: 42px;
+    padding: 0 16px;
+    border-bottom: 1px solid #172438;
+    background: #0a121d;
+    color: #607088;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.1px;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.findings-table thead th:first-child {
+    padding-left: 24px;
+}
+
+.findings-table tbody tr {
+    border-bottom: 1px solid #152235;
+    cursor: pointer;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.findings-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.findings-table tbody tr:hover {
+    background: #101b2a;
+}
+
+.findings-table tbody td {
+    height: 72px;
+    padding: 10px 16px;
+    color: #aab7c9;
+    font-size: 12px;
+    vertical-align: middle;
+}
+
+.findings-table tbody td:first-child {
+    padding-left: 24px;
+}
+
+.finding-title-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 310px;
+}
+
+.finding-title-cell > div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.finding-title-cell strong {
+    overflow: hidden;
+    color: #dce6f3;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.finding-title-cell span:not(.finding-severity-dot) {
+    overflow: hidden;
+    max-width: 430px;
+    color: #627289;
+    font-size: 10px;
+    line-height: 1.4;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.finding-severity-dot {
+    width: 7px;
+    height: 7px;
+    flex: 0 0 7px;
+    border-radius: 50%;
+    background: #64748b;
+}
+
+.finding-severity-dot.critical {
+    background: #ef4444;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.45);
+}
+
+.finding-severity-dot.high {
+    background: #f59e0b;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+}
+
+.finding-severity-dot.medium {
+    background: #eab308;
+    box-shadow: 0 0 8px rgba(234, 179, 8, 0.35);
+}
+
+.finding-severity-dot.low {
+    background: #3d91ff;
+    box-shadow: 0 0 8px rgba(61, 145, 255, 0.4);
+}
+
+.finding-severity {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 66px;
+    height: 25px;
+    padding: 0 9px;
+    border-radius: 5px;
+    background: #172131;
+    color: #8290a5;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+}
+
+.finding-severity.critical {
+    background: rgba(127, 29, 29, 0.28);
+    color: #f87171;
+}
+
+.finding-severity.high {
+    background: rgba(120, 72, 12, 0.3);
+    color: #f59e0b;
+}
+
+.finding-severity.medium {
+    background: rgba(113, 82, 10, 0.27);
+    color: #eab308;
+}
+
+.finding-severity.low {
+    background: rgba(30, 64, 105, 0.32);
+    color: #60a5fa;
+}
+
+.finding-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 64px;
+    height: 25px;
+    padding: 0 9px;
+    border-radius: 5px;
+    background: #162130;
+    color: #8290a5;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.finding-status.open {
+    background: rgba(8, 96, 68, 0.26);
+    color: #35d59a;
+}
+
+.finding-status.resolved {
+    background: rgba(38, 65, 97, 0.32);
+    color: #82a8d8;
+}
+
+.finding-status.in_progress {
+    background: rgba(120, 72, 12, 0.28);
+    color: #f2b34b;
+}
+
+.finding-resource-cell {
+    display: block;
+    max-width: 230px;
+    overflow: hidden;
+    color: #a1aec0;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.finding-id-cell {
+    color: #66768d;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-size: 10px;
+    white-space: nowrap;
+}
+
+.finding-row-arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    color: #53657d;
+    font-size: 15px;
+    transition:
+        color 0.15s ease,
+        background 0.15s ease,
+        transform 0.15s ease;
+}
+
+.findings-table tbody tr:hover .finding-row-arrow {
+    background: #15263c;
+    color: #69aaf4;
+    transform: translateX(2px);
+}
+
+
+/* ---------------------------------------------------------
+   EMPTY / LOADING
+   --------------------------------------------------------- */
+
+.empty-findings {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    min-height: 250px;
+    padding: 32px;
+    text-align: center;
+}
+
+.empty-findings strong {
+    color: #cbd7e7;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.empty-findings span {
+    max-width: 420px;
+    margin-top: 7px;
+    color: #65758b;
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.empty-findings-action {
+    margin-top: 16px;
+}
+
+.findings-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 46px;
+    padding: 0 24px;
+    border-top: 1px solid #172438;
+    color: #5f6f85;
+    font-size: 10px;
+}
+
+.findings-footer strong {
+    color: #94a4b9;
+    font-weight: 600;
+}
+
+
+/* ---------------------------------------------------------
+   RESPONSIVE
+   --------------------------------------------------------- */
+
+@media (max-width: 1100px) {
+
+    .findings-page {
+        padding: 32px 28px 48px;
+    }
+
+    .finding-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .findings-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .finding-search {
+        max-width: none;
+    }
+
+    .finding-filters {
+        justify-content: flex-end;
+    }
+
+}
+
+
+@media (max-width: 720px) {
+
+    .findings-page {
+        padding: 24px 18px 40px;
+    }
+
+    .findings-page-header {
+        flex-direction: column;
+    }
+
+    .findings-live-status {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .finding-summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .findings-panel-header {
+        flex-direction: column;
+    }
+
+    .findings-queue-meta {
+        padding-top: 0;
+    }
+
+    .finding-filters {
+        flex-wrap: wrap;
+    }
+
+    .finding-filters select {
+        flex: 1;
+        min-width: 130px;
+    }
+
+    .findings-footer {
+        align-items: flex-start;
+        flex-direction: column;
+        justify-content: center;
+        gap: 5px;
+        padding: 10px 18px;
+    }
+
+}
+
+/* =========================================================
+   CSPM FINDING DETAILS 2.0
+   ========================================================= */
+
+.cspm-finding-details-page {
+    position: relative;
+    width: 100%;
+    min-height: 100%;
+    padding: 34px 44px 60px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.cspm-finding-details-page::before,
+.cspm-finding-details-page::after {
+    display: none !important;
+    content: none !important;
+}
+
+
+/* ---------------------------------------------------------
+   TOP NAVIGATION
+   --------------------------------------------------------- */
+
+.cspm-details-topbar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 28px;
+}
+
+.cspm-back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 13px;
+    border: 1px solid #223249;
+    border-radius: 7px;
+    background: #0d1724;
+    color: #8eafd4;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        border-color 0.18s ease,
+        background 0.18s ease,
+        color 0.18s ease;
+}
+
+.cspm-back-button:hover {
+    border-color: #31567e;
+    background: #102035;
+    color: #b5d2f2;
+}
+
+.cspm-back-button span {
+    font-size: 15px;
+    line-height: 1;
+}
+
+
+/* ---------------------------------------------------------
+   HERO
+   --------------------------------------------------------- */
+
+.cspm-finding-hero {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 32px;
+    margin-bottom: 28px;
+}
+
+.cspm-finding-hero-copy {
+    min-width: 0;
+}
+
+.cspm-finding-hero-copy .section-eyebrow {
+    margin-bottom: 11px;
+}
+
+.cspm-finding-hero-copy h2 {
+    max-width: 920px;
+    margin: 0;
+    color: #f3f7fd;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+}
+
+.cspm-finding-reference {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 0 0;
+    color: #667991;
+    font-family:
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        monospace;
+    font-size: 11px;
+}
+
+.cspm-finding-reference span:first-child {
+    color: #78a5d5;
+}
+
+.cspm-finding-hero-meta {
+    display: flex;
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 9px;
+    flex-shrink: 0;
+    padding-top: 4px;
+}
+
+.cspm-finding-hero-meta .finding-severity {
+    min-width: 78px;
+    height: 32px;
+    font-size: 10px;
+}
+
+.cspm-finding-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 32px;
+    padding: 0 12px;
+    border: 1px solid #213148;
+    border-radius: 7px;
+    background: #0d1724;
+    color: #7187a2;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.cspm-finding-type .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #27c77e;
+    box-shadow: 0 0 9px rgba(39, 199, 126, 0.5);
+}
+
+
+/* ---------------------------------------------------------
+   PANEL BASE
+   --------------------------------------------------------- */
+
+.cspm-overview-panel,
+.cspm-action-panel,
+.cspm-information-panel,
+.cspm-evidence-panel {
+    width: 100%;
+    margin-bottom: 18px;
+    border: 1px solid #1b2a3e;
+    border-radius: 11px;
+    background: #0b1420;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.cspm-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    min-height: 76px;
+    padding: 18px 24px;
+    border-bottom: 1px solid #172539;
+    box-sizing: border-box;
+}
+
+.cspm-panel-header .section-eyebrow {
+    margin-bottom: 7px;
+}
+
+.cspm-panel-header h3 {
+    margin: 0;
+    color: #e9f0f8;
+    font-size: 18px;
+    font-weight: 650;
+}
+
+.cspm-panel-header p {
+    margin: 6px 0 0;
+    color: #63748a;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+
+/* ---------------------------------------------------------
+   OVERVIEW
+   --------------------------------------------------------- */
+
+.cspm-overview-grid {
+    display: grid;
+    grid-template-columns: 0.9fr 0.9fr 1.45fr 0.9fr;
+}
+
+.cspm-overview-item {
+    min-height: 116px;
+    padding: 20px 22px;
+    border-right: 1px solid #172539;
+    box-sizing: border-box;
+}
+
+.cspm-overview-item:last-child {
+    border-right: none;
+}
+
+.cspm-overview-item > span:first-child {
+    display: block;
+    margin-bottom: 13px;
+    color: #63758d;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.1px;
+}
+
+.cspm-overview-item > strong {
+    display: block;
+    overflow: hidden;
+    color: #dce6f2;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.45;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cspm-overview-item .finding-severity {
+    height: 26px;
+}
+
+
+/* ---------------------------------------------------------
+   ANALYST ACTION
+   --------------------------------------------------------- */
+
+.cspm-action-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 28px;
+    min-height: 116px;
+    padding: 22px 24px;
+    box-sizing: border-box;
+}
+
+.cspm-action-panel > div:first-child {
+    min-width: 0;
+}
+
+.cspm-action-panel .section-eyebrow {
+    margin-bottom: 7px;
+}
+
+.cspm-action-panel h3 {
+    margin: 0;
+    color: #e8eff8;
+    font-size: 18px;
+    font-weight: 650;
+}
+
+.cspm-action-panel p {
+    margin: 6px 0 0;
+    color: #66778d;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.cspm-action-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.cspm-action-controls .finding-status {
+    height: 30px;
+}
+
+.cspm-status-action {
+    height: 38px;
+    padding: 0 15px;
+    border: 1px solid #263a53;
+    border-radius: 7px;
+    background: #101d2c;
+    color: #dce7f4;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background 0.18s ease,
+        border-color 0.18s ease,
+        color 0.18s ease;
+}
+
+.cspm-status-action:hover:not(:disabled) {
+    border-color: #3c6591;
+    background: #15273d;
+    color: #ffffff;
+}
+
+.cspm-status-action:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+
+/* ---------------------------------------------------------
+   FINDING INFORMATION
+   --------------------------------------------------------- */
+
+.cspm-information-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+}
+
+.cspm-information-item {
+    min-height: 92px;
+    padding: 20px 24px;
+    border-right: 1px solid #172539;
+    border-bottom: 1px solid #172539;
+    box-sizing: border-box;
+}
+
+.cspm-information-item:nth-child(2n) {
+    border-right: none;
+}
+
+.cspm-information-item:nth-last-child(-n + 2) {
+    border-bottom: none;
+}
+
+.cspm-information-item.wide {
+    grid-column: span 2;
+    border-right: none;
+}
+
+.cspm-information-item > span {
+    display: block;
+    margin-bottom: 10px;
+    color: #60738c;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.1px;
+}
+
+.cspm-information-item > strong {
+    display: block;
+    color: #d8e3ef;
+    font-family:
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        monospace;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.cspm-information-item > p {
+    max-width: 1050px;
+    margin: 0;
+    color: #a1aec0;
+    font-size: 12px;
+    line-height: 1.65;
+}
+
+
+/* ---------------------------------------------------------
+   EVIDENCE
+   --------------------------------------------------------- */
+
+.cspm-evidence-container {
+    position: relative;
+    padding: 22px 24px 24px;
+    background: #09111b;
+}
+
+.cspm-evidence-label {
+    display: inline-flex;
+    align-items: center;
+    height: 23px;
+    padding: 0 8px;
+    margin-bottom: 12px;
+    border: 1px solid #1d3047;
+    border-radius: 5px;
+    background: #0d1927;
+    color: #68809c;
+    font-family:
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+}
+
+.finding-evidence {
+    width: 100%;
+    max-height: 560px;
+    margin: 0;
+    padding: 20px;
+    border: 1px solid #17283d;
+    border-radius: 8px;
+    background: #070e17;
+    color: #a9bad0;
+    font-family:
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        monospace;
+    font-size: 11px;
+    line-height: 1.65;
+    white-space: pre;
+    overflow: auto;
+    box-sizing: border-box;
+}
+
+.finding-evidence::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.finding-evidence::-webkit-scrollbar-track {
+    background: #08101a;
+}
+
+.finding-evidence::-webkit-scrollbar-thumb {
+    border-radius: 6px;
+    background: #263a52;
+}
+
+.finding-evidence::-webkit-scrollbar-thumb:hover {
+    background: #34506f;
+}
+
+
+/* ---------------------------------------------------------
+   NOT FOUND
+   --------------------------------------------------------- */
+
+.finding-not-found {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    max-width: 680px;
+    margin: 60px auto;
+    padding: 32px;
+    border: 1px solid #1b2a3e;
+    border-radius: 11px;
+    background: #0b1420;
+}
+
+.finding-not-found .section-eyebrow {
+    margin-bottom: 10px;
+}
+
+.finding-not-found h2 {
+    margin: 0;
+    color: #edf3fa;
+    font-size: 24px;
+}
+
+.finding-not-found p {
+    margin: 9px 0 20px;
+    color: #68798f;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+
+/* ---------------------------------------------------------
+   ERROR
+   --------------------------------------------------------- */
+
+.cspm-finding-details-page .error-message {
+    margin-bottom: 18px;
+}
+
+
+/* ---------------------------------------------------------
+   RESPONSIVE
+   --------------------------------------------------------- */
+
+@media (max-width: 1100px) {
+
+    .cspm-finding-details-page {
+        padding: 30px 28px 48px;
+    }
+
+    .cspm-overview-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .cspm-overview-item:nth-child(2) {
+        border-right: none;
+    }
+
+    .cspm-overview-item:nth-child(-n + 2) {
+        border-bottom: 1px solid #172539;
+    }
+
+    .cspm-information-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cspm-information-item {
+        border-right: none;
+    }
+
+    .cspm-information-item.wide {
+        grid-column: span 1;
+    }
+
+    .cspm-information-item:nth-last-child(-n + 2) {
+        border-bottom: 1px solid #172539;
+    }
+
+    .cspm-information-item:last-child {
+        border-bottom: none;
+    }
+
+}
+
+
+@media (max-width: 760px) {
+
+    .cspm-finding-details-page {
+        padding: 24px 18px 40px;
+    }
+
+    .cspm-finding-hero {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .cspm-finding-hero-copy h2 {
+        font-size: 25px;
+    }
+
+    .cspm-finding-hero-meta {
+        align-items: flex-start;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .cspm-overview-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cspm-overview-item {
+        border-right: none;
+        border-bottom: 1px solid #172539;
+    }
+
+    .cspm-overview-item:last-child {
+        border-bottom: none;
+    }
+
+    .cspm-action-panel {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .cspm-action-controls {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .cspm-information-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cspm-information-item {
+        min-height: auto;
+    }
+
+    .cspm-information-item.wide {
+        grid-column: span 1;
+    }
+
+    .cspm-panel-header {
+        padding: 17px 18px;
+    }
+
+    .cspm-information-item {
+        padding: 17px 18px;
+    }
+
+    .cspm-evidence-container {
+        padding: 18px;
+    }
+
+}
+.cspm-overview-item > strong {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    word-break: break-word;
+}

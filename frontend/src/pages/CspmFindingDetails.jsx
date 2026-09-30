@@ -2,6 +2,28 @@ import { useState } from "react"
 import { updateFindingStatus } from "../api/cloudsentinel"
 
 
+function FindingSeverity({ severity }) {
+    const normalized = String(
+        severity || "INFO"
+    ).toUpperCase()
+
+    return (
+        <span
+            className={`finding-severity ${normalized.toLowerCase()}`}
+        >
+            {normalized}
+        </span>
+    )
+}
+
+
+function formatStatus(status) {
+    return String(
+        status || "OPEN"
+    ).toUpperCase()
+}
+
+
 function CspmFindingDetails({
     finding,
     onBack,
@@ -22,23 +44,32 @@ function CspmFindingDetails({
 
     if (!finding) {
         return (
-            <div className="coming-soon">
+            <div className="cspm-finding-details-page">
 
-                <span>
-                    FINDING NOT FOUND
-                </span>
+                <div className="finding-not-found">
 
-                <h2>
-                    No CSPM finding selected
-                </h2>
+                    <span className="section-eyebrow">
+                        FINDING NOT FOUND
+                    </span>
 
-                <button
-                    type="button"
-                    className="cspm-status-action"
-                    onClick={onBack}
-                >
-                    Back to Dashboard
-                </button>
+                    <h2>
+                        No CSPM finding selected
+                    </h2>
+
+                    <p>
+                        Return to the dashboard and
+                        select a security posture finding.
+                    </p>
+
+                    <button
+                        type="button"
+                        className="cspm-back-button"
+                        onClick={onBack}
+                    >
+                        Back to Dashboard
+                    </button>
+
+                </div>
 
             </div>
         )
@@ -48,6 +79,10 @@ function CspmFindingDetails({
     const severity = String(
         finding.severity || "INFO"
     ).toUpperCase()
+
+    const status = formatStatus(
+        currentStatus
+    )
 
 
     async function handleStatusChange(
@@ -80,6 +115,7 @@ function CspmFindingDetails({
                 statusError.message ||
                 "Unable to update finding status."
             )
+
         } finally {
             setUpdating(false)
         }
@@ -87,47 +123,70 @@ function CspmFindingDetails({
 
 
     return (
-        <div className="alert-details-page">
+        <div className="cspm-finding-details-page">
 
-            <button
-                type="button"
-                className="back-button"
-                onClick={onBack}
-            >
-                Back to Dashboard
-            </button>
+            <div className="cspm-details-topbar">
+
+                <button
+                    type="button"
+                    className="cspm-back-button"
+                    onClick={onBack}
+                >
+                    <span aria-hidden="true">
+                        ←
+                    </span>
+
+                    Back to Dashboard
+                </button>
+
+            </div>
 
 
-            <div className="page-heading">
+            <div className="cspm-finding-hero">
 
-                <div>
+                <div className="cspm-finding-hero-copy">
 
-                    <span className="topbar-eyebrow">
+                    <span className="section-eyebrow">
                         CSPM SECURITY FINDING
                     </span>
 
                     <h2>
-                        {finding.title}
+                        {finding.title ||
+                            "Security posture finding"}
                     </h2>
 
-                    <p>
-                        {finding.finding_id} ·{" "}
-                        {finding.resource ||
-                            "AWS resource"}
+                    <p className="cspm-finding-reference">
+                        <span>
+                            {finding.finding_id ||
+                                finding.id ||
+                                "UNKNOWN"}
+                        </span>
+
+                        <span>
+                            ·
+                        </span>
+
+                        <span>
+                            {finding.resource ||
+                                "AWS resource"}
+                        </span>
                     </p>
 
                 </div>
 
 
-                <div className="alert-details-actions">
+                <div className="cspm-finding-hero-meta">
 
                     <FindingSeverity
                         severity={severity}
                     />
 
-                    <div className="live-indicator">
+                    <div className="cspm-finding-type">
+
                         <span className="status-dot"></span>
+
                         CSPM finding
+
                     </div>
 
                 </div>
@@ -142,136 +201,85 @@ function CspmFindingDetails({
             )}
 
 
-            <section className="detail-grid">
+            <section className="cspm-overview-panel">
 
-                <div className="detail-card">
-
-                    <span>
-                        SEVERITY
-                    </span>
-
-                    <strong>
-                        {severity}
-                    </strong>
-
-                </div>
-
-
-                <div className="detail-card">
-
-                    <span>
-                        STATUS
-                    </span>
-
-                    <strong>
-                        {currentStatus}
-                    </strong>
-
-                </div>
-
-
-                <div className="detail-card">
-
-                    <span>
-                        RESOURCE
-                    </span>
-
-                    <strong>
-                        {finding.resource ||
-                            "Unknown"}
-                    </strong>
-
-                </div>
-
-
-                <div className="detail-card">
-
-                    <span>
-                        SOURCE
-                    </span>
-
-                    <strong>
-                        {finding.source ||
-                            "AWS_CSPM"}
-                    </strong>
-
-                </div>
-
-            </section>
-
-
-            <section className="detail-panel">
-
-                <div
-                    className="detail-panel-header"
-                    style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: "20px",
-                        flexWrap: "wrap",
-                    }}
-                >
+                <div className="cspm-panel-header">
 
                     <div>
 
-                        <span className="topbar-eyebrow">
-                            ANALYST ACTION
+                        <span className="section-eyebrow">
+                            FINDING OVERVIEW
                         </span>
 
                         <h3>
-                            Finding Status
+                            Security posture status
                         </h3>
 
                     </div>
 
+                </div>
 
-                    <div
-                        className="finding-status-actions"
-                        style={{
-                            marginLeft: "auto",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "flex-end",
-                            flexShrink: 0,
-                        }}
-                    >
 
-                        {currentStatus === "OPEN" ? (
+                <div className="cspm-overview-grid">
 
-                            <button
-                                type="button"
-                                className="cspm-status-action"
-                                disabled={updating}
-                                onClick={() =>
-                                    handleStatusChange(
-                                        "RESOLVED"
-                                    )
-                                }
+                    <div className="cspm-overview-item">
+
+                        <span>
+                            SEVERITY
+                        </span>
+
+                        <div>
+                            <FindingSeverity
+                                severity={severity}
+                            />
+                        </div>
+
+                    </div>
+
+
+                    <div className="cspm-overview-item">
+
+                        <span>
+                            STATUS
+                        </span>
+
+                        <div>
+
+                            <span
+                                className={`finding-status ${status.toLowerCase()}`}
                             >
-                                {updating
-                                    ? "Updating..."
-                                    : "Mark as Resolved"}
-                            </button>
+                                {status}
+                            </span>
 
-                        ) : (
+                        </div>
 
-                            <button
-                                type="button"
-                                className="cspm-status-action"
-                                disabled={updating}
-                                onClick={() =>
-                                    handleStatusChange(
-                                        "OPEN"
-                                    )
-                                }
-                            >
-                                {updating
-                                    ? "Updating..."
-                                    : "Reopen Finding"}
-                            </button>
+                    </div>
 
-                        )}
+
+                    <div className="cspm-overview-item">
+
+                        <span>
+                            RESOURCE
+                        </span>
+
+                        <strong>
+                            {finding.resource ||
+                                "Unknown"}
+                        </strong>
+
+                    </div>
+
+
+                    <div className="cspm-overview-item">
+
+                        <span>
+                            SOURCE
+                        </span>
+
+                        <strong>
+                            {finding.source ||
+                                "AWS_CSPM"}
+                        </strong>
 
                     </div>
 
@@ -280,13 +288,83 @@ function CspmFindingDetails({
             </section>
 
 
-            <section className="detail-panel">
+            <section className="cspm-action-panel">
 
-                <div className="detail-panel-header">
+                <div>
+
+                    <span className="section-eyebrow">
+                        ANALYST ACTION
+                    </span>
+
+                    <h3>
+                        Finding Status
+                    </h3>
+
+                    <p>
+                        Update the remediation state
+                        of this CSPM finding.
+                    </p>
+
+                </div>
+
+
+                <div className="cspm-action-controls">
+
+                    <span
+                        className={`finding-status ${status.toLowerCase()}`}
+                    >
+                        {status}
+                    </span>
+
+
+                    {status === "OPEN" ? (
+
+                        <button
+                            type="button"
+                            className="cspm-status-action"
+                            disabled={updating}
+                            onClick={() =>
+                                handleStatusChange(
+                                    "RESOLVED"
+                                )
+                            }
+                        >
+                            {updating
+                                ? "Updating..."
+                                : "Mark as Resolved"}
+                        </button>
+
+                    ) : (
+
+                        <button
+                            type="button"
+                            className="cspm-status-action"
+                            disabled={updating}
+                            onClick={() =>
+                                handleStatusChange(
+                                    "OPEN"
+                                )
+                            }
+                        >
+                            {updating
+                                ? "Updating..."
+                                : "Reopen Finding"}
+                        </button>
+
+                    )}
+
+                </div>
+
+            </section>
+
+
+            <section className="cspm-information-panel">
+
+                <div className="cspm-panel-header">
 
                     <div>
 
-                        <span className="topbar-eyebrow">
+                        <span className="section-eyebrow">
                             FINDING INFORMATION
                         </span>
 
@@ -299,64 +377,76 @@ function CspmFindingDetails({
                 </div>
 
 
-                <div className="detail-list">
+                <div className="cspm-information-grid">
 
-                    <div>
+                    <div className="cspm-information-item">
+
                         <span>
-                            Finding ID
+                            FINDING ID
                         </span>
 
                         <strong>
-                            {finding.finding_id}
+                            {finding.finding_id ||
+                                finding.id ||
+                                "Unknown"}
                         </strong>
+
                     </div>
 
 
-                    <div>
+                    <div className="cspm-information-item">
+
                         <span>
-                            Resource
+                            RESOURCE
                         </span>
 
                         <strong>
                             {finding.resource ||
                                 "Unknown"}
                         </strong>
+
                     </div>
 
 
-                    <div>
+                    <div className="cspm-information-item">
+
                         <span>
-                            Detected
+                            DETECTED
                         </span>
 
                         <strong>
                             {finding.detected_at ||
                                 "Unknown"}
                         </strong>
+
                     </div>
 
 
-                    <div>
+                    <div className="cspm-information-item wide">
+
                         <span>
-                            Description
+                            DESCRIPTION
                         </span>
 
-                        <strong>
+                        <p>
                             {finding.description ||
                                 "No description available."}
-                        </strong>
+                        </p>
+
                     </div>
 
 
-                    <div>
+                    <div className="cspm-information-item wide">
+
                         <span>
-                            Recommendation
+                            RECOMMENDATION
                         </span>
 
-                        <strong>
+                        <p>
                             {finding.recommendation ||
                                 "No recommendation available."}
-                        </strong>
+                        </p>
+
                     </div>
 
                 </div>
@@ -364,13 +454,13 @@ function CspmFindingDetails({
             </section>
 
 
-            <section className="detail-panel">
+            <section className="cspm-evidence-panel">
 
-                <div className="detail-panel-header">
+                <div className="cspm-panel-header">
 
                     <div>
 
-                        <span className="topbar-eyebrow">
+                        <span className="section-eyebrow">
                             EVIDENCE
                         </span>
 
@@ -378,39 +468,35 @@ function CspmFindingDetails({
                             Detection Evidence
                         </h3>
 
+                        <p>
+                            Raw evidence captured by
+                            the CSPM detection pipeline.
+                        </p>
+
                     </div>
 
                 </div>
 
 
-                <pre className="finding-evidence">
-                    {JSON.stringify(
-                        finding.evidence || {},
-                        null,
-                        2
-                    )}
-                </pre>
+                <div className="cspm-evidence-container">
+
+                    <div className="cspm-evidence-label">
+                        JSON
+                    </div>
+
+                    <pre className="finding-evidence">
+                        {JSON.stringify(
+                            finding.evidence || {},
+                            null,
+                            2
+                        )}
+                    </pre>
+
+                </div>
 
             </section>
 
         </div>
-    )
-}
-
-
-function FindingSeverity({
-    severity,
-}) {
-    const normalized = String(
-        severity || "INFO"
-    ).toUpperCase()
-
-    return (
-        <span
-            className={`finding-severity ${normalized.toLowerCase()}`}
-        >
-            {normalized}
-        </span>
     )
 }
 
