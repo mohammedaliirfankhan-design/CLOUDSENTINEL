@@ -17,9 +17,101 @@ function formatAuditTime(timestamp) {
     return date.toLocaleString()
 }
 
+function formatRelativeTime(timestamp) {
+    if (!timestamp) {
+        return "Unknown"
+    }
+
+    const date = new Date(
+        timestamp.replace(" ", "T") + "Z"
+    )
+
+    if (Number.isNaN(date.getTime())) {
+        return timestamp
+    }
+
+    const diffSeconds = Math.max(
+        0,
+        Math.floor((Date.now() - date.getTime()) / 1000)
+    )
+
+    if (diffSeconds < 60) {
+        return "Just now"
+    }
+
+    const minutes = Math.floor(diffSeconds / 60)
+
+    if (minutes < 60) {
+        return `${minutes}m ago`
+    }
+
+    const hours = Math.floor(minutes / 60)
+
+    if (hours < 24) {
+        return `${hours}h ago`
+    }
+
+    const days = Math.floor(hours / 24)
+
+    if (days < 7) {
+        return `${days}d ago`
+    }
+
+    return date.toLocaleDateString()
+}
+
 function formatAction(action) {
     return String(action || "UNKNOWN")
         .replaceAll("_", " ")
+        .replace(/\b\w/g, (character) =>
+            character.toUpperCase()
+        )
+}
+
+function formatRole(role) {
+    return formatAction(role || "UNKNOWN")
+}
+
+function getInitial(username) {
+    return String(username || "?")
+        .trim()
+        .charAt(0)
+        .toUpperCase()
+}
+
+function getRoleClass(role) {
+    return String(role || "UNKNOWN")
+        .toLowerCase()
+        .replaceAll("_", "-")
+}
+
+function getActionClass(action) {
+    return String(action || "unknown")
+        .toLowerCase()
+        .replaceAll("_", "-")
+}
+
+function AuditSummaryCard({
+    label,
+    value,
+    description,
+    tone = "blue",
+}) {
+    return (
+        <div className={`audit-summary-card ${tone}`}>
+            <div className="audit-summary-card-top">
+                <span>{label}</span>
+
+                <span className="audit-summary-indicator"></span>
+            </div>
+
+            <strong>{value}</strong>
+
+            <p>{description}</p>
+
+            <div className="audit-summary-decoration"></div>
+        </div>
+    )
 }
 
 function AuditLogs() {
@@ -43,6 +135,7 @@ function AuditLogs() {
                             ? data
                             : []
                     )
+
                     setError("")
                 }
             } catch (loadError) {
@@ -78,7 +171,27 @@ function AuditLogs() {
                     .map((log) => log.action)
                     .filter(Boolean)
             ),
-        ]
+        ].sort()
+    }, [logs])
+
+    const summary = useMemo(() => {
+        const adminCount = logs.filter(
+            (log) =>
+                String(log.role || "").toUpperCase() ===
+                "SOC_ADMIN"
+        ).length
+
+        const analystCount = logs.filter(
+            (log) =>
+                String(log.role || "").toUpperCase() ===
+                "SOC_ANALYST"
+        ).length
+
+        return {
+            total: logs.length,
+            admin: adminCount,
+            analyst: analystCount,
+        }
     }, [logs])
 
     const filteredLogs = useMemo(() => {
@@ -115,9 +228,20 @@ function AuditLogs() {
         })
     }, [logs, search, action, role])
 
+    const hasFilters =
+        search.trim() !== "" ||
+        action !== "ALL" ||
+        role !== "ALL"
+
+    function clearFilters() {
+        setSearch("")
+        setAction("ALL")
+        setRole("ALL")
+    }
+
     return (
         <div className="audit-page">
-            <div className="page-heading">
+            <div className="page-heading audit-page-heading">
                 <div>
                     <span className="topbar-eyebrow">
                         SECURITY OPERATIONS
@@ -127,7 +251,8 @@ function AuditLogs() {
 
                     <p>
                         Review authenticated activity and
-                        security operations across CloudSentinel.
+                        security operations across
+                        CloudSentinel.
                     </p>
                 </div>
 
@@ -137,17 +262,92 @@ function AuditLogs() {
                 </div>
             </div>
 
+            <div className="audit-summary-grid">
+                <AuditSummaryCard
+                    label="TOTAL EVENTS"
+                    value={summary.total}
+                    description="Recorded audit events"
+                    tone="blue"
+                />
+
+                <AuditSummaryCard
+                    label="SOC ADMINS"
+                    value={summary.admin}
+                    description="Administrative activity"
+                    tone="purple"
+                />
+
+                <AuditSummaryCard
+                    label="SOC ANALYSTS"
+                    value={summary.analyst}
+                    description="Analyst activity"
+                    tone="orange"
+                />
+
+                <AuditSummaryCard
+                    label="VISIBLE"
+                    value={filteredLogs.length}
+                    description="Events matching filters"
+                    tone="green"
+                />
+            </div>
+
             <section className="audit-panel">
+                <div className="audit-panel-header">
+                    <div>
+                        <div className="section-eyebrow">
+                            AUDIT TRAIL
+                        </div>
+
+                        <h3>Activity History</h3>
+
+                        <p>
+                            Administrative and analyst
+                            actions recorded by CloudSentinel.
+                        </p>
+                    </div>
+
+                    <div className="audit-panel-count">
+                        <span>Showing</span>
+                        <strong>
+                            {filteredLogs.length}
+                        </strong>
+                        <span>of</span>
+                        <strong>{logs.length}</strong>
+                    </div>
+                </div>
+
                 <div className="audit-toolbar">
-                    <input
-                        type="search"
-                        value={search}
-                        onChange={(event) =>
-                            setSearch(event.target.value)
-                        }
-                        placeholder="Search audit logs..."
-                        aria-label="Search audit logs"
-                    />
+                    <div className="audit-search-wrapper">
+                        <span className="audit-search-icon">
+                            ⌕
+                        </span>
+
+                        <input
+                            type="search"
+                            value={search}
+                            onChange={(event) =>
+                                setSearch(
+                                    event.target.value
+                                )
+                            }
+                            placeholder="Search users, actions, targets..."
+                            aria-label="Search audit logs"
+                        />
+
+                        {search && (
+                            <button
+                                type="button"
+                                className="audit-search-clear"
+                                onClick={() =>
+                                    setSearch("")
+                                }
+                                aria-label="Clear search"
+                            >
+                                ×
+                            </button>
+                        )}
+                    </div>
 
                     <select
                         value={action}
@@ -182,16 +382,29 @@ function AuditLogs() {
                         <option value="ALL">
                             All roles
                         </option>
+
                         <option value="SOC_ADMIN">
                             SOC Admin
                         </option>
+
                         <option value="SOC_ANALYST">
                             SOC Analyst
                         </option>
+
                         <option value="UNKNOWN">
                             Unknown
                         </option>
                     </select>
+
+                    {hasFilters && (
+                        <button
+                            type="button"
+                            className="audit-clear-filters"
+                            onClick={clearFilters}
+                        >
+                            Clear filters
+                        </button>
+                    )}
                 </div>
 
                 {error && (
@@ -201,8 +414,11 @@ function AuditLogs() {
                 )}
 
                 {loading && (
-                    <div className="loading-message">
-                        Loading audit logs...
+                    <div className="audit-loading-state">
+                        <div className="audit-loading-dot"></div>
+                        <span>
+                            Loading audit activity...
+                        </span>
                     </div>
                 )}
 
@@ -211,12 +427,12 @@ function AuditLogs() {
                         <table className="audit-table">
                             <thead>
                                 <tr>
-                                    <th>USER</th>
+                                    <th>ACTOR</th>
                                     <th>ROLE</th>
                                     <th>ACTION</th>
                                     <th>TARGET</th>
                                     <th>DETAILS</th>
-                                    <th>CREATED</th>
+                                    <th>TIME</th>
                                 </tr>
                             </thead>
 
@@ -225,41 +441,78 @@ function AuditLogs() {
                                     <tr>
                                         <td
                                             colSpan="6"
-                                            className="empty-state"
+                                            className="audit-empty-state"
                                         >
-                                            No audit logs found.
+                                            <div>
+                                                <strong>
+                                                    No audit events found
+                                                </strong>
+
+                                                <span>
+                                                    Try changing your
+                                                    search or filters.
+                                                </span>
+
+                                                {hasFilters && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={
+                                                            clearFilters
+                                                        }
+                                                    >
+                                                        Clear filters
+                                                    </button>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ) : (
                                     filteredLogs.map(
                                         (log) => (
-                                            <tr key={log.id}>
+                                            <tr
+                                                key={log.id}
+                                                className="audit-row"
+                                            >
                                                 <td>
-                                                    <strong>
-                                                        {log.username}
-                                                    </strong>
+                                                    <div className="audit-actor">
+                                                        <span className="audit-avatar">
+                                                            {getInitial(
+                                                                log.username
+                                                            )}
+                                                        </span>
+
+                                                        <div>
+                                                            <strong>
+                                                                {log.username ||
+                                                                    "Unknown user"}
+                                                            </strong>
+
+                                                            <span>
+                                                                User activity
+                                                            </span>
+                                                        </div>
+                                                    </div>
                                                 </td>
 
                                                 <td>
                                                     <span
-                                                        className={`audit-role-badge ${String(
-                                                            log.role ||
-                                                                "UNKNOWN"
-                                                        ).toLowerCase()}`}
+                                                        className={`audit-role-badge ${getRoleClass(
+                                                            log.role
+                                                        )}`}
                                                     >
-                                                        {formatAction(
-                                                            log.role ||
-                                                                "UNKNOWN"
+                                                        <span className="audit-badge-dot"></span>
+
+                                                        {formatRole(
+                                                            log.role
                                                         )}
                                                     </span>
                                                 </td>
 
                                                 <td>
                                                     <span
-                                                        className={`audit-action-badge ${String(
-                                                            log.action ||
-                                                                "UNKNOWN"
-                                                        ).toLowerCase()}`}
+                                                        className={`audit-action-badge ${getActionClass(
+                                                            log.action
+                                                        )}`}
                                                     >
                                                         {formatAction(
                                                             log.action
@@ -268,28 +521,50 @@ function AuditLogs() {
                                                 </td>
 
                                                 <td>
-                                                    <span className="audit-target">
-                                                        {log.target_type ||
-                                                            "—"}
+                                                    <div className="audit-target">
+                                                        <strong>
+                                                            {log.target_type ||
+                                                                "—"}
+                                                        </strong>
 
                                                         {log.target_id && (
-                                                            <>
-                                                                {" "}
-                                                                #{log.target_id}
-                                                            </>
+                                                            <span>
+                                                                #
+                                                                {
+                                                                    log.target_id
+                                                                }
+                                                            </span>
                                                         )}
-                                                    </span>
+                                                    </div>
                                                 </td>
 
                                                 <td>
-                                                    {log.details ||
-                                                        "—"}
+                                                    <div
+                                                        className="audit-details"
+                                                        title={
+                                                            log.details ||
+                                                            ""
+                                                        }
+                                                    >
+                                                        {log.details ||
+                                                            "No additional details"}
+                                                    </div>
                                                 </td>
 
                                                 <td>
-                                                    {formatAuditTime(
-                                                        log.created_at
-                                                    )}
+                                                    <div className="audit-time">
+                                                        <strong>
+                                                            {formatRelativeTime(
+                                                                log.created_at
+                                                            )}
+                                                        </strong>
+
+                                                        <span>
+                                                            {formatAuditTime(
+                                                                log.created_at
+                                                            )}
+                                                        </span>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         )
@@ -297,6 +572,22 @@ function AuditLogs() {
                                 )}
                             </tbody>
                         </table>
+                    </div>
+                )}
+
+                {!loading && !error && (
+                    <div className="audit-panel-footer">
+                        <span>
+                            Audit trail synchronized with
+                            CloudSentinel access management.
+                        </span>
+
+                        <strong>
+                            {filteredLogs.length} visible{" "}
+                            {filteredLogs.length === 1
+                                ? "event"
+                                : "events"}
+                        </strong>
                     </div>
                 )}
             </section>
