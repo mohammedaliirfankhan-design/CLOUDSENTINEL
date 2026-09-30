@@ -27,94 +27,122 @@ function Login({ onSignup }) {
 
     return (
         <div className="login-page">
-            <div className="login-card">
-                <div className="login-brand">
-                    <div className="login-brand-mark">
-                        <img
-                            src={cloudSentinelLogo}
-                            alt="CloudSentinel"
-                        />
-                    </div>
-
-                    <div>
-                        <strong>CloudSentinel</strong>
-                        <span>SOC PLATFORM</span>
-                    </div>
-                </div>
-
-                <div className="login-heading">
-                    <span className="topbar-eyebrow">
-                        SECURITY OPERATIONS
-                    </span>
-
-                    <h1>Sign in</h1>
-
-                    <p>
-                        Access the CloudSentinel security operations
-                        platform.
-                    </p>
-                </div>
-
-                <form onSubmit={handleSubmit}>
-                    <label>
-                        Username
-
-                        <input
-                            type="text"
-                            value={username}
-                            onChange={(event) =>
-                                setUsername(event.target.value)
-                            }
-                            placeholder="Enter username"
-                            autoComplete="username"
-                            required
-                        />
-                    </label>
-
-                    <label>
-                        Password
-
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(event) =>
-                                setPassword(event.target.value)
-                            }
-                            placeholder="Enter password"
-                            autoComplete="current-password"
-                            required
-                        />
-                    </label>
-
-                    {error && (
-                        <div className="login-error">
-                            {error}
+            <div className="login-shell">
+                <div className="login-card">
+                    <div className="login-brand">
+                        <div className="login-brand-mark">
+                            <img
+                                src={cloudSentinelLogo}
+                                alt="CloudSentinel"
+                            />
                         </div>
-                    )}
 
-                    <button
-                        type="submit"
-                        className="login-button"
-                        disabled={loading}
+                        <div className="login-brand-copy">
+                            <strong>CloudSentinel</strong>
+                            <span>SOC PLATFORM</span>
+                        </div>
+                    </div>
+
+                    <div className="login-heading">
+                        <span className="topbar-eyebrow">
+                            SECURITY OPERATIONS
+                        </span>
+
+                        <h1>Sign in</h1>
+
+                        <p>
+                            Access the CloudSentinel security operations
+                            platform.
+                        </p>
+                    </div>
+
+                    <form
+                        className="login-form"
+                        onSubmit={handleSubmit}
                     >
-                        {loading ? "Signing in..." : "Sign in"}
-                    </button>
-                </form>
+                        <label className="login-field">
+                            <span>Username</span>
 
-                <div className="login-switch">
-                    <span>First time using CloudSentinel?</span>
+                            <input
+                                type="text"
+                                value={username}
+                                onChange={(event) =>
+                                    setUsername(event.target.value)
+                                }
+                                placeholder="Enter username"
+                                autoComplete="username"
+                                required
+                            />
+                        </label>
 
-                    <button
-                        type="button"
-                        className="login-signup-button"
-                        onClick={onSignup}
-                    >
-                        Create account
-                    </button>
-                </div>
+                        <label className="login-field">
+                            <span>Password</span>
 
-                <div className="login-footer">
-                    CloudSentinel secure access
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={(event) =>
+                                    setPassword(event.target.value)
+                                }
+                                placeholder="Enter password"
+                                autoComplete="current-password"
+                                required
+                            />
+                        </label>
+
+                        {error && (
+                            <div className="login-error">
+                                <span className="login-error-icon">
+                                    !
+                                </span>
+
+                                <span>{error}</span>
+                            </div>
+                        )}
+
+                        <button
+                            type="submit"
+                            className="login-button"
+                            disabled={loading}
+                        >
+                            <span>
+                                {loading
+                                    ? "Signing in..."
+                                    : "Sign in"}
+                            </span>
+
+                            {!loading && (
+                                <span className="login-button-arrow">
+                                    →
+                                </span>
+                            )}
+                        </button>
+                    </form>
+
+                    <div className="login-switch">
+                        <span>
+                            First time using CloudSentinel?
+                        </span>
+
+                        <button
+                            type="button"
+                            className="login-signup-button"
+                            onClick={onSignup}
+                        >
+                            Create account
+                        </button>
+                    </div>
+
+                    <div className="login-divider">
+                        <span></span>
+                        <small>SECURE SOC ACCESS</small>
+                        <span></span>
+                    </div>
+
+                    <div className="login-footer">
+                        <span>CloudSentinel</span>
+                        <span>Security Operations Platform</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -122,6 +150,3 @@ function Login({ onSignup }) {
 }
 
 export default Login
-
-
-
