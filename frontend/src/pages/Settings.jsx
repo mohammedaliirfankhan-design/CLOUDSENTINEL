@@ -16,6 +16,14 @@ function formatUserTime(timestamp) {
     return date.toLocaleString()
 }
 
+function formatRole(role) {
+    if (role === "SOC_ADMIN") {
+        return "SOC Admin"
+    }
+
+    return "SOC Analyst"
+}
+
 function Settings() {
     const { user, loadingUser } = useAuth()
 
@@ -29,9 +37,12 @@ function Settings() {
         )
     }
 
+    const isAdmin = user?.role === "SOC_ADMIN"
+    const isActive = Boolean(user?.is_active)
+
     return (
         <div className="settings-page">
-            <div className="page-heading">
+            <div className="settings-page-heading">
                 <div>
                     <span className="topbar-eyebrow">
                         SYSTEM
@@ -40,141 +51,227 @@ function Settings() {
                     <h2>Settings</h2>
 
                     <p>
-                        View your CloudSentinel account and system information.
+                        Manage your CloudSentinel account,
+                        session, and platform information.
                     </p>
                 </div>
 
-                <div className="live-indicator">
+                <div className="settings-status-pill">
                     <span className="status-dot"></span>
                     Configuration
                 </div>
             </div>
 
-            <div className="settings-grid">
-                <section className="settings-panel">
-                    <div className="settings-panel-header">
+            <div className="settings-overview-grid">
+                <section className="settings-card settings-account-card">
+                    <div className="settings-card-header">
                         <div>
-                            <span className="settings-label">
+                            <span className="settings-section-eyebrow">
                                 ACCOUNT
                             </span>
 
                             <h3>Profile</h3>
+
+                            <p>
+                                Authenticated CloudSentinel account
+                                information.
+                            </p>
+                        </div>
+
+                        <div className="settings-card-indicator blue">
+                            ●
                         </div>
                     </div>
 
-                    <div className="settings-list">
-                        <div className="settings-row">
-                            <span>Username</span>
+                    <div className="settings-profile">
+                        <div className="settings-avatar">
+                            {(user?.username || "U")
+                                .charAt(0)
+                                .toUpperCase()}
+                        </div>
+
+                        <div className="settings-profile-identity">
                             <strong>
                                 {user?.username || "Unknown"}
                             </strong>
-                        </div>
 
-                        <div className="settings-row">
-                            <span>Email</span>
-                            <strong>
+                            <span>
                                 {user?.email || "Unknown"}
-                            </strong>
+                            </span>
                         </div>
+                    </div>
 
-                        <div className="settings-row">
-                            <span>Role</span>
-                            <span className="user-role-badge">
-                                {user?.role === "SOC_ADMIN"
-                                    ? "SOC ADMIN"
-                                    : "SOC ANALYST"}
+                    <div className="settings-detail-grid">
+                        <div className="settings-detail">
+                            <span>ROLE</span>
+
+                            <span
+                                className={`user-role-badge ${
+                                    isAdmin
+                                        ? "soc-admin"
+                                        : "soc-analyst"
+                                }`}
+                            >
+                                {formatRole(user?.role)}
                             </span>
                         </div>
 
-                        <div className="settings-row">
-                            <span>Status</span>
+                        <div className="settings-detail">
+                            <span>STATUS</span>
+
                             <span
                                 className={`user-status-badge ${
-                                    user?.is_active
+                                    isActive
                                         ? "active"
                                         : "inactive"
                                 }`}
                             >
-                                {user?.is_active
+                                {isActive
                                     ? "Active"
                                     : "Inactive"}
                             </span>
                         </div>
 
-                        <div className="settings-row">
-                            <span>Created</span>
+                        <div className="settings-detail">
+                            <span>CREATED</span>
+
                             <strong>
                                 {formatUserTime(
                                     user?.created_at
                                 )}
                             </strong>
                         </div>
+
+                        <div className="settings-detail">
+                            <span>ACCESS LEVEL</span>
+
+                            <strong>
+                                {isAdmin
+                                    ? "Administrative"
+                                    : "Analyst"}
+                            </strong>
+                        </div>
                     </div>
                 </section>
 
-                <section className="settings-panel">
-                    <div className="settings-panel-header">
+                <section className="settings-card settings-security-card">
+                    <div className="settings-card-header">
                         <div>
-                            <span className="settings-label">
+                            <span className="settings-section-eyebrow">
                                 SECURITY
                             </span>
 
-                            <h3>Access</h3>
+                            <h3>Authentication</h3>
+
+                            <p>
+                                Current session and access
+                                security state.
+                            </p>
+                        </div>
+
+                        <div className="settings-card-indicator green">
+                            ●
                         </div>
                     </div>
 
-                    <div className="settings-info-card">
-                        <span className="settings-info-dot"></span>
+                    <div className="settings-session-status">
+                        <div className="settings-session-icon">
+                            ✓
+                        </div>
 
                         <div>
-                            <strong>Authenticated session</strong>
+                            <strong>
+                                Authenticated session
+                            </strong>
 
                             <p>
-                                Your CloudSentinel session is protected
-                                by signed JWT authentication.
+                                Your CloudSentinel session is
+                                authenticated using signed JWT
+                                credentials.
                             </p>
                         </div>
                     </div>
 
-                    <div className="settings-row">
-                        <span>Access level</span>
+                    <div className="settings-detail-list">
+                        <div className="settings-row">
+                            <span>Session status</span>
 
-                        <strong>
-                            {user?.role === "SOC_ADMIN"
-                                ? "Administrative"
-                                : "Analyst"}
-                        </strong>
+                            <span className="user-status-badge active">
+                                Active
+                            </span>
+                        </div>
+
+                        <div className="settings-row">
+                            <span>Access level</span>
+
+                            <strong>
+                                {isAdmin
+                                    ? "Administrative"
+                                    : "Analyst"}
+                            </strong>
+                        </div>
+
+                        <div className="settings-row">
+                            <span>Authentication</span>
+
+                            <strong>
+                                JWT
+                            </strong>
+                        </div>
                     </div>
                 </section>
 
-                <section className="settings-panel settings-panel-wide">
-                    <div className="settings-panel-header">
+                <section className="settings-card settings-platform-card">
+                    <div className="settings-card-header">
                         <div>
-                            <span className="settings-label">
-                                SYSTEM
+                            <span className="settings-section-eyebrow">
+                                PLATFORM
                             </span>
 
                             <h3>CloudSentinel</h3>
+
+                            <p>
+                                Current platform and API
+                                connectivity information.
+                            </p>
+                        </div>
+
+                        <div className="settings-card-indicator cyan">
+                            ●
                         </div>
                     </div>
 
-                    <div className="settings-list">
-                        <div className="settings-row">
-                            <span>Platform version</span>
-                            <strong>CloudSentinel v1.0</strong>
+                    <div className="settings-platform-grid">
+                        <div className="settings-platform-item">
+                            <span>PLATFORM VERSION</span>
+
+                            <strong>
+                                CloudSentinel v1.0
+                            </strong>
                         </div>
 
-                        <div className="settings-row">
-                            <span>API endpoint</span>
-                            <strong>127.0.0.1:8000</strong>
+                        <div className="settings-platform-item">
+                            <span>API ENDPOINT</span>
+
+                            <strong>
+                                127.0.0.1:8000
+                            </strong>
                         </div>
 
-                        <div className="settings-row">
-                            <span>API status</span>
+                        <div className="settings-platform-item">
+                            <span>API STATUS</span>
 
                             <span className="user-status-badge active">
                                 Connected
                             </span>
+                        </div>
+
+                        <div className="settings-platform-item">
+                            <span>ENVIRONMENT</span>
+
+                            <strong>
+                                Local
+                            </strong>
                         </div>
                     </div>
                 </section>
