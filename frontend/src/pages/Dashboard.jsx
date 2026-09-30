@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react"
+﻿import { useEffect, useMemo, useState } from "react"
 
 import {
     getAlerts,
@@ -14,8 +14,15 @@ function formatRelativeTime(timestamp) {
         return "Recent"
     }
 
+    const normalized =
+        String(timestamp).includes("T")
+            ? timestamp
+            : String(timestamp).replace(" ", "T")
+
     const parsed = new Date(
-        timestamp.replace(" ", "T") + "Z"
+        normalized.endsWith("Z")
+            ? normalized
+            : `${normalized}Z`
     )
 
     if (Number.isNaN(parsed.getTime())) {
@@ -51,40 +58,99 @@ function formatRelativeTime(timestamp) {
 }
 
 
+function formatRule(rule) {
+    return String(
+        rule || "Security alert"
+    )
+        .replaceAll("_", " ")
+        .toLowerCase()
+        .replace(/\b\w/g, (letter) =>
+            letter.toUpperCase()
+        )
+}
+
+
+function normalizeSeverity(severity) {
+    return String(
+        severity || "MEDIUM"
+    ).toUpperCase()
+}
+
+
+function SeverityBadge({ severity }) {
+    const normalized =
+        normalizeSeverity(severity)
+
+    return (
+        <span
+            className={`dashboard-severity ${normalized.toLowerCase()}`}
+        >
+            {normalized}
+        </span>
+    )
+}
+
+
 function MetricCard({
     label,
     value,
     description,
     tone,
+    onClick,
 }) {
-    return (
-        <div
-            className={`metric-card ${
-                tone || ""
-            }`}
-        >
-            <div className="metric-card-header">
-                <span>{label}</span>
+    const content = (
+        <>
+            <div className="dashboard-metric-top">
+                <span className="dashboard-metric-label">
+                    {label}
+                </span>
 
-                <span className="metric-indicator"></span>
+                <span
+                    className={`dashboard-metric-dot ${
+                        tone || ""
+                    }`}
+                />
             </div>
 
-            <strong className="metric-value">
+            <strong className="dashboard-metric-value">
                 {value}
             </strong>
 
-            <span className="metric-description">
+            <span className="dashboard-metric-description">
                 {description}
             </span>
+        </>
+    )
+
+    if (onClick) {
+        return (
+            <button
+                type="button"
+                className={`dashboard-metric-card clickable ${
+                    tone || ""
+                }`}
+                onClick={onClick}
+            >
+                {content}
+            </button>
+        )
+    }
+
+    return (
+        <div
+            className={`dashboard-metric-card ${
+                tone || ""
+            }`}
+        >
+            {content}
         </div>
     )
 }
 
 
 function FindingSeverity({ severity }) {
-    const normalized = String(
-        severity || "INFO"
-    ).toUpperCase()
+    const normalized =
+        normalizeSeverity(severity)
 
     return (
         <span
@@ -112,23 +178,29 @@ function FindingStatus({ status }) {
 
 
 function Dashboard({ onNavigate }) {
-    const [metrics, setMetrics] = useState(null)
+    const [metrics, setMetrics] =
+        useState(null)
 
-    const [alerts, setAlerts] = useState([])
+    const [alerts, setAlerts] =
+        useState([])
 
-    const [findings, setFindings] = useState([])
+    const [findings, setFindings] =
+        useState([])
 
     const [findingMetrics, setFindingMetrics] =
         useState(null)
 
-    const [error, setError] = useState("")
+    const [error, setError] =
+        useState("")
 
     const [findingError, setFindingError] =
         useState("")
 
-    const [loading, setLoading] = useState(true)
+    const [loading, setLoading] =
+        useState(true)
 
-    const [scanning, setScanning] = useState(false)
+    const [scanning, setScanning] =
+        useState(false)
 
 
     useEffect(() => {
@@ -149,16 +221,22 @@ function Dashboard({ onNavigate }) {
                 ])
 
                 if (!cancelled) {
-                    setMetrics(metricsData)
+                    setMetrics(
+                        metricsData
+                    )
 
                     setAlerts(
-                        Array.isArray(alertsData)
+                        Array.isArray(
+                            alertsData
+                        )
                             ? alertsData
                             : []
                     )
 
                     setFindings(
-                        Array.isArray(findingsData)
+                        Array.isArray(
+                            findingsData
+                        )
                             ? findingsData
                             : []
                     )
@@ -172,7 +250,6 @@ function Dashboard({ onNavigate }) {
                     )
 
                     setError("")
-
                     setFindingError("")
                 }
             } catch (loadError) {
@@ -204,23 +281,29 @@ function Dashboard({ onNavigate }) {
 
     async function handleCspmScan() {
         setScanning(true)
-
         setFindingError("")
 
         try {
-            const result = await runCspmScan()
+            const result =
+                await runCspmScan()
 
             if (
                 result &&
-                Array.isArray(result.findings)
+                Array.isArray(
+                    result.findings
+                )
             ) {
-                setFindings(result.findings)
+                setFindings(
+                    result.findings
+                )
             } else {
                 const latestFindings =
                     await getFindings()
 
                 setFindings(
-                    Array.isArray(latestFindings)
+                    Array.isArray(
+                        latestFindings
+                    )
                         ? latestFindings
                         : []
                 )
@@ -265,36 +348,36 @@ function Dashboard({ onNavigate }) {
     const criticalAlerts =
         alerts.filter(
             (alert) =>
-                String(
+                normalizeSeverity(
                     alert.severity
-                ).toUpperCase() === "CRITICAL"
+                ) === "CRITICAL"
         ).length
 
 
     const highAlerts =
         alerts.filter(
             (alert) =>
-                String(
+                normalizeSeverity(
                     alert.severity
-                ).toUpperCase() === "HIGH"
+                ) === "HIGH"
         ).length
 
 
     const mediumAlerts =
         alerts.filter(
             (alert) =>
-                String(
+                normalizeSeverity(
                     alert.severity
-                ).toUpperCase() === "MEDIUM"
+                ) === "MEDIUM"
         ).length
 
 
     const lowAlerts =
         alerts.filter(
             (alert) =>
-                String(
+                normalizeSeverity(
                     alert.severity
-                ).toUpperCase() === "LOW"
+                ) === "LOW"
         ).length
 
 
@@ -311,179 +394,305 @@ function Dashboard({ onNavigate }) {
         findingMetrics?.medium ?? 0
 
 
+    const recentAlerts =
+        useMemo(
+            () =>
+                [...alerts]
+                    .sort(
+                        (a, b) =>
+                            new Date(
+                                b.created_at ||
+                                    0
+                            ) -
+                            new Date(
+                                a.created_at ||
+                                    0
+                            )
+                    )
+                    .slice(0, 5),
+            [alerts]
+        )
+
+
+    const threatTotal =
+        criticalAlerts +
+        highAlerts +
+        mediumAlerts +
+        lowAlerts
+
+
+    const threatRows = [
+        {
+            label: "Critical",
+            count: criticalAlerts,
+            className: "critical",
+        },
+        {
+            label: "High",
+            count: highAlerts,
+            className: "high",
+        },
+        {
+            label: "Medium",
+            count: mediumAlerts,
+            className: "medium",
+        },
+        {
+            label: "Low",
+            count: lowAlerts,
+            className: "low",
+        },
+    ]
+
+
     return (
         <div className="dashboard-page">
 
-            <div className="page-heading">
+            <header className="dashboard-hero">
 
-                <div>
+                <div className="dashboard-hero-copy">
 
-                    <h2>
+                    <div className="dashboard-eyebrow">
+                        CLOUD SECURITY OPERATIONS
+                    </div>
+
+                    <h1>
                         Security Overview
-                    </h2>
+                    </h1>
 
                     <p>
-                        Monitor CloudSentinel
-                        security activity and
-                        investigate potential
-                        threats.
+                        Monitor cloud activity,
+                        investigate threats, and
+                        track AWS security posture
+                        from one place.
                     </p>
 
                 </div>
 
 
-                <div className="live-indicator">
+                <div className="dashboard-environment">
 
-                    <span className="status-dot"></span>
+                    <div className="dashboard-live">
+                        <span className="dashboard-live-dot" />
+                        Live monitoring
+                    </div>
 
-                    Live monitoring
+                    <div className="dashboard-environment-name">
+                        AWS Environment
+                    </div>
+
+                    <div className="dashboard-environment-region">
+                        ap-south-1
+                    </div>
 
                 </div>
 
-            </div>
+            </header>
 
 
             {error && (
-                <div className="error-message">
+                <div className="dashboard-error">
                     {error}
                 </div>
             )}
 
 
             {loading && (
-                <div className="loading-message">
+                <div className="dashboard-loading">
                     Loading security overview...
                 </div>
             )}
 
 
-            <section className="metrics-grid">
+            <section className="dashboard-section">
 
-                <MetricCard
-                    label="TOTAL ALERTS"
-                    value={totalAlerts}
-                    description="All detected security alerts"
-                />
+                <div className="dashboard-section-heading">
 
-                <MetricCard
-                    label="CRITICAL"
-                    value={criticalAlerts}
-                    description="High-risk alerts requiring attention"
-                    tone="critical"
-                />
+                    <div>
+                        <span className="dashboard-section-kicker">
+                            OPERATIONS
+                        </span>
 
-                <MetricCard
-                    label="OPEN INVESTIGATIONS"
-                    value={investigatingAlerts}
-                    description="Currently being investigated"
-                    tone="high"
-                />
+                        <h2>
+                            Security Activity
+                        </h2>
+                    </div>
 
-                <MetricCard
-                    label="RESOLVED"
-                    value={resolvedAlerts}
-                    description="Successfully closed incidents"
-                    tone="low"
-                />
+                    <button
+                        type="button"
+                        className="dashboard-text-button"
+                        onClick={() =>
+                            onNavigate("alerts")
+                        }
+                    >
+                        View all alerts →
+                    </button>
+
+                </div>
+
+
+                <div className="dashboard-metrics">
+
+                    <MetricCard
+                        label="TOTAL ALERTS"
+                        value={totalAlerts}
+                        description="Detected security alerts"
+                        onClick={() =>
+                            onNavigate("alerts")
+                        }
+                    />
+
+                    <MetricCard
+                        label="CRITICAL"
+                        value={criticalAlerts}
+                        description="Immediate attention"
+                        tone="critical"
+                        onClick={() =>
+                            onNavigate("alerts")
+                        }
+                    />
+
+                    <MetricCard
+                        label="INVESTIGATING"
+                        value={investigatingAlerts}
+                        description="Active investigations"
+                        tone="high"
+                        onClick={() =>
+                            onNavigate(
+                                "investigations"
+                            )
+                        }
+                    />
+
+                    <MetricCard
+                        label="RESOLVED"
+                        value={resolvedAlerts}
+                        description="Closed investigations"
+                        tone="low"
+                        onClick={() =>
+                            onNavigate(
+                                "investigations"
+                            )
+                        }
+                    />
+
+                </div>
 
             </section>
 
 
-            <section className="dashboard-grid">
+            <section className="dashboard-main-grid">
 
-                <div className="dashboard-panel">
+                <div className="dashboard-card threat-card">
 
-                    <div className="panel-header">
+                    <div className="dashboard-card-header">
 
                         <div>
+                            <span className="dashboard-card-kicker">
+                                THREAT LANDSCAPE
+                            </span>
 
                             <h3>
-                                Risk Overview
+                                Threat Distribution
                             </h3>
 
                             <p>
-                                Current alert
-                                distribution by
-                                severity
+                                Current alerts grouped
+                                by severity.
                             </p>
-
                         </div>
 
-
-                        <button
-                            type="button"
-                            className="panel-action"
-                            onClick={() =>
-                                onNavigate(
-                                    "alerts"
-                                )
-                            }
-                        >
-                            View alerts
-                        </button>
+                        <span className="dashboard-card-total">
+                            {threatTotal}
+                        </span>
 
                     </div>
 
 
-                    <div className="risk-placeholder">
+                    <div className="threat-layout">
 
-                        <div className="risk-ring">
+                        <div className="threat-summary">
 
-                            <strong>
-                                {totalAlerts}
-                            </strong>
+                            <div className="threat-total">
+                                <strong>
+                                    {totalAlerts}
+                                </strong>
 
-                            <span>
-                                Total alerts
-                            </span>
+                                <span>
+                                    Total alerts
+                                </span>
+                            </div>
+
+                            <div className="threat-summary-status">
+                                {criticalAlerts > 0
+                                    ? `${criticalAlerts} critical alert${
+                                          criticalAlerts ===
+                                          1
+                                              ? ""
+                                              : "s"
+                                      } require attention`
+                                    : "No critical alerts detected"}
+                            </div>
 
                         </div>
 
 
-                        <div className="risk-legend">
+                        <div className="threat-bars">
 
-                            <div>
-                                <span className="legend-dot critical"></span>
+                            {threatRows.map(
+                                (row) => {
+                                    const percentage =
+                                        threatTotal >
+                                        0
+                                            ? Math.round(
+                                                  (row.count /
+                                                      threatTotal) *
+                                                      100
+                                              )
+                                            : 0
 
-                                Critical
+                                    return (
+                                        <div
+                                            className="threat-row"
+                                            key={
+                                                row.label
+                                            }
+                                        >
 
-                                <strong>
-                                    {criticalAlerts}
-                                </strong>
-                            </div>
+                                            <div className="threat-row-heading">
+
+                                                <span className="threat-row-label">
+                                                    <span
+                                                        className={`threat-dot ${row.className}`}
+                                                    />
+
+                                                    {
+                                                        row.label
+                                                    }
+                                                </span>
+
+                                                <strong>
+                                                    {
+                                                        row.count
+                                                    }
+                                                </strong>
+
+                                            </div>
 
 
-                            <div>
-                                <span className="legend-dot high"></span>
+                                            <div className="threat-progress">
+                                                <span
+                                                    className={`threat-progress-fill ${row.className}`}
+                                                    style={{
+                                                        width: `${percentage}%`,
+                                                    }}
+                                                />
+                                            </div>
 
-                                High
-
-                                <strong>
-                                    {highAlerts}
-                                </strong>
-                            </div>
-
-
-                            <div>
-                                <span className="legend-dot medium"></span>
-
-                                Medium
-
-                                <strong>
-                                    {mediumAlerts}
-                                </strong>
-                            </div>
-
-
-                            <div>
-                                <span className="legend-dot low"></span>
-
-                                Low
-
-                                <strong>
-                                    {lowAlerts}
-                                </strong>
-                            </div>
+                                        </div>
+                                    )
+                                }
+                            )}
 
                         </div>
 
@@ -492,90 +701,110 @@ function Dashboard({ onNavigate }) {
                 </div>
 
 
-                <div className="dashboard-panel">
+                <div className="dashboard-card activity-card">
 
-                    <div className="panel-header">
+                    <div className="dashboard-card-header">
 
                         <div>
+                            <span className="dashboard-card-kicker">
+                                SECURITY FEED
+                            </span>
 
                             <h3>
                                 Recent Activity
                             </h3>
 
                             <p>
-                                Latest security
-                                events
+                                Latest detected security
+                                events.
                             </p>
-
                         </div>
 
                     </div>
 
 
-                    <div className="activity-list">
+                    <div className="dashboard-activity-list">
 
-                        {alerts.length === 0 && (
-                            <div className="loading-message">
-                                No recent security
-                                activity.
-                            </div>
-                        )}
+                        {recentAlerts.length === 0 ? (
+                            <div className="dashboard-empty">
 
-
-                        {alerts
-                            .slice(0, 3)
-                            .map((alert) => (
-
-                                <div
-                                    className="activity-item"
-                                    key={alert.id}
-                                >
-
-                                    <span
-                                        className={`activity-icon ${
-                                            String(
-                                                alert.severity ||
-                                                    "medium"
-                                            ).toLowerCase()
-                                        }`}
-                                    >
-                                        !
-                                    </span>
-
-
-                                    <div>
-
-                                        <strong>
-                                            {String(
-                                                alert.rule ||
-                                                    "Security alert"
-                                            ).replaceAll(
-                                                "_",
-                                                " "
-                                            )}
-                                        </strong>
-
-
-                                        <span>
-                                            {alert.user ||
-                                                "Unknown user"}{" "}
-                                            ·{" "}
-                                            {alert.action ||
-                                                "Security event"}
-                                        </span>
-
-                                    </div>
-
-
-                                    <time>
-                                        {formatRelativeTime(
-                                            alert.created_at
-                                        )}
-                                    </time>
-
+                                <div className="dashboard-empty-icon">
+                                    ✓
                                 </div>
 
-                            ))}
+                                <strong>
+                                    No recent threats
+                                </strong>
+
+                                <span>
+                                    CloudSentinel has not
+                                    detected any alert
+                                    activity yet.
+                                </span>
+
+                            </div>
+                        ) : (
+                            recentAlerts.map(
+                                (alert) => (
+                                    <button
+                                        type="button"
+                                        className="dashboard-activity-item"
+                                        key={
+                                            alert.id
+                                        }
+                                        onClick={() =>
+                                            onNavigate({
+                                                page: "alert-details",
+                                                alertId:
+                                                    alert.id,
+                                            })
+                                        }
+                                    >
+
+                                        <span
+                                            className={`dashboard-activity-indicator ${normalizeSeverity(
+                                                alert.severity
+                                            ).toLowerCase()}`}
+                                        />
+
+                                        <span className="dashboard-activity-content">
+
+                                            <strong>
+                                                {formatRule(
+                                                    alert.rule
+                                                )}
+                                            </strong>
+
+                                            <span>
+                                                {alert.user ||
+                                                    "Unknown user"}
+                                                {" · "}
+                                                {alert.action ||
+                                                    "Security event"}
+                                            </span>
+
+                                        </span>
+
+                                        <span className="dashboard-activity-meta">
+
+                                            <SeverityBadge
+                                                severity={
+                                                    alert.severity
+                                                }
+                                            />
+
+                                            <time>
+                                                {formatRelativeTime(
+                                                    alert.created_at
+                                                )}
+                                            </time>
+
+                                        </span>
+
+                                    </button>
+                                )
+                            )
+                        )}
 
                     </div>
 
@@ -584,54 +813,68 @@ function Dashboard({ onNavigate }) {
             </section>
 
 
-            {/* =====================================================
-                AWS CSPM / CLOUD POSTURE
-               ===================================================== */}
+            <section className="dashboard-card posture-card">
 
-            <section className="dashboard-panel cspm-panel">
-
-                <div className="panel-header">
+                <div className="dashboard-card-header posture-header">
 
                     <div>
+                        <span className="dashboard-card-kicker">
+                            CLOUD SECURITY POSTURE
+                        </span>
 
                         <h3>
                             AWS Security Posture
                         </h3>
 
                         <p>
-                            CloudSentinel CSPM
-                            findings from your
-                            AWS environment.
+                            Review configuration findings
+                            identified by CloudSentinel CSPM.
                         </p>
-
                     </div>
 
 
-                    <button
-                        type="button"
-                        className="panel-action"
-                        onClick={handleCspmScan}
-                        disabled={scanning}
-                    >
-                        {scanning
-                            ? "Scanning..."
-                            : "Run CSPM Scan"}
-                    </button>
+                    <div className="posture-actions">
+
+                        <button
+                            type="button"
+                            className="dashboard-secondary-button"
+                            onClick={() =>
+                                onNavigate(
+                                    "cspm-findings"
+                                )
+                            }
+                        >
+                            View findings
+                        </button>
+
+                        <button
+                            type="button"
+                            className="dashboard-primary-button"
+                            onClick={
+                                handleCspmScan
+                            }
+                            disabled={scanning}
+                        >
+                            {scanning
+                                ? "Scanning..."
+                                : "Run CSPM scan"}
+                        </button>
+
+                    </div>
 
                 </div>
 
 
                 {findingError && (
-                    <div className="error-message">
+                    <div className="dashboard-error dashboard-inline-error">
                         {findingError}
                     </div>
                 )}
 
 
-                <div className="cspm-summary">
+                <div className="posture-metrics">
 
-                    <div className="cspm-stat">
-
+                    <div className="posture-metric">
                         <span>
                             TOTAL FINDINGS
                         </span>
@@ -639,12 +882,9 @@ function Dashboard({ onNavigate }) {
                         <strong>
                             {totalFindings}
                         </strong>
-
                     </div>
 
-
-                    <div className="cspm-stat critical">
-
+                    <div className="posture-metric critical">
                         <span>
                             CRITICAL
                         </span>
@@ -652,12 +892,9 @@ function Dashboard({ onNavigate }) {
                         <strong>
                             {criticalFindings}
                         </strong>
-
                     </div>
 
-
-                    <div className="cspm-stat high">
-
+                    <div className="posture-metric high">
                         <span>
                             HIGH
                         </span>
@@ -665,12 +902,9 @@ function Dashboard({ onNavigate }) {
                         <strong>
                             {highFindings}
                         </strong>
-
                     </div>
 
-
-                    <div className="cspm-stat medium">
-
+                    <div className="posture-metric medium">
                         <span>
                             MEDIUM
                         </span>
@@ -678,40 +912,38 @@ function Dashboard({ onNavigate }) {
                         <strong>
                             {mediumFindings}
                         </strong>
-
                     </div>
 
                 </div>
 
 
-                <div className="cspm-findings">
+                <div className="dashboard-findings">
 
                     {findings.length === 0 ? (
+                        <div className="dashboard-empty posture-empty">
 
-                        <div className="cspm-empty">
+                            <div className="dashboard-empty-icon">
+                                ✓
+                            </div>
 
                             <strong>
                                 No CSPM findings detected
                             </strong>
 
                             <span>
-                                Your latest AWS posture
-                                scan did not identify
-                                any configured security
-                                findings.
+                                The latest posture data
+                                contains no configured
+                                security findings.
                             </span>
 
                         </div>
-
                     ) : (
-
                         findings
                             .slice(0, 5)
                             .map((finding) => (
-
                                 <button
                                     type="button"
-                                    className="cspm-finding"
+                                    className="dashboard-finding"
                                     key={
                                         finding.id ||
                                         finding.finding_id ||
@@ -727,12 +959,22 @@ function Dashboard({ onNavigate }) {
                                     }
                                 >
 
-                                    <div>
+                                    <div className="dashboard-finding-main">
 
-                                        <strong>
-                                            {finding.title ||
-                                                "Security finding"}
-                                        </strong>
+                                        <div className="dashboard-finding-title-row">
+
+                                            <strong>
+                                                {finding.title ||
+                                                    "Security finding"}
+                                            </strong>
+
+                                            <FindingSeverity
+                                                severity={
+                                                    finding.severity
+                                                }
+                                            />
+
+                                        </div>
 
                                         <span>
                                             {finding.finding_id}
@@ -744,7 +986,7 @@ function Dashboard({ onNavigate }) {
                                     </div>
 
 
-                                    <div className="cspm-finding-meta">
+                                    <div className="dashboard-finding-meta">
 
                                         <FindingStatus
                                             status={
@@ -752,21 +994,84 @@ function Dashboard({ onNavigate }) {
                                             }
                                         />
 
-                                        <FindingSeverity
-                                            severity={
-                                                finding.severity
-                                            }
-                                        />
+                                        <span className="dashboard-finding-arrow">
+                                            →
+                                        </span>
 
                                     </div>
 
                                 </button>
-
                             ))
-
                     )}
 
                 </div>
+
+            </section>
+
+
+            <section className="dashboard-footer-grid">
+
+                <button
+                    type="button"
+                    className="dashboard-quick-card"
+                    onClick={() =>
+                        onNavigate("investigations")
+                    }
+                >
+                    <span className="dashboard-quick-kicker">
+                        INVESTIGATIONS
+                    </span>
+
+                    <strong>
+                        {investigatingAlerts}
+                    </strong>
+
+                    <span>
+                        Active investigations →
+                    </span>
+                </button>
+
+
+                <button
+                    type="button"
+                    className="dashboard-quick-card"
+                    onClick={() =>
+                        onNavigate("events")
+                    }
+                >
+                    <span className="dashboard-quick-kicker">
+                        EVENT STREAM
+                    </span>
+
+                    <strong>
+                        CloudTrail
+                    </strong>
+
+                    <span>
+                        Review security events →
+                    </span>
+                </button>
+
+
+                <button
+                    type="button"
+                    className="dashboard-quick-card"
+                    onClick={() =>
+                        onNavigate("cspm-findings")
+                    }
+                >
+                    <span className="dashboard-quick-kicker">
+                        POSTURE
+                    </span>
+
+                    <strong>
+                        {totalFindings}
+                    </strong>
+
+                    <span>
+                        Security findings →
+                    </span>
+                </button>
 
             </section>
 
