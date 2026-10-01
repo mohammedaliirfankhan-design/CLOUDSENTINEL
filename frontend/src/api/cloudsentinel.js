@@ -100,6 +100,38 @@ export function updateFindingStatus(findingId, status) {
     })
 }
 
+export function getAnalyticsOverview() {
+    return apiRequest("/analytics/overview")
+}
+
+export function getAnalyticsSeverity() {
+    return apiRequest("/analytics/severity")
+}
+
+export function getAnalyticsRules() {
+    return apiRequest("/analytics/rules")
+}
+
+export function getAnalyticsUsers(limit = 10) {
+    return apiRequest(`/analytics/users?limit=${limit}`)
+}
+
+export function getAnalyticsSourceIps(limit = 10) {
+    return apiRequest(`/analytics/source-ips?limit=${limit}`)
+}
+
+export function getAnalyticsTrends(days = 7) {
+    return apiRequest(`/analytics/trends?days=${days}`)
+}
+
+export function getAnalyticsInvestigations() {
+    return apiRequest("/analytics/investigations")
+}
+
+export function getAnalyticsCspm() {
+    return apiRequest("/analytics/cspm")
+}
+
 /*
  * ---------------------------------------------------------
  * AUTHENTICATION

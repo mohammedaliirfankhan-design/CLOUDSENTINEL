@@ -37,6 +37,14 @@ from database.alert_store import (
     get_security_finding,
     update_security_finding_status,
     get_security_finding_metrics,
+    get_soc_analytics_overview,
+    get_alerts_by_severity,
+    get_alerts_by_rule,
+    get_alerts_by_user,
+    get_alerts_by_source_ip,
+    get_alert_trends,
+    get_investigation_analytics,
+    get_cspm_analytics,
 )
 
 from ingestion.api_ingestion import router as ingestion_router
@@ -317,6 +325,86 @@ def events(current_user: dict = Depends(get_current_user)):
 @app.get("/metrics")
 def metrics(current_user: dict = Depends(get_current_user)):
     return get_soc_metrics()
+
+@app.get("/analytics/overview")
+def analytics_overview(
+    current_user: dict = Depends(get_current_user),
+):
+    """Return consolidated SOC analytics."""
+
+    return get_soc_analytics_overview()
+
+
+@app.get("/analytics/severity")
+def analytics_severity(
+    current_user: dict = Depends(get_current_user),
+):
+    """Return alert distribution by severity."""
+
+    return get_alerts_by_severity()
+
+
+@app.get("/analytics/rules")
+def analytics_rules(
+    current_user: dict = Depends(get_current_user),
+):
+    """Return alert distribution by detection rule."""
+
+    return get_alerts_by_rule()
+
+
+@app.get("/analytics/users")
+def analytics_users(
+    limit: int = 10,
+    current_user: dict = Depends(get_current_user),
+):
+    """Return users generating the most alerts."""
+
+    limit = max(1, min(limit, 100))
+
+    return get_alerts_by_user(limit=limit)
+
+
+@app.get("/analytics/source-ips")
+def analytics_source_ips(
+    limit: int = 10,
+    current_user: dict = Depends(get_current_user),
+):
+    """Return source IPs generating the most alerts."""
+
+    limit = max(1, min(limit, 100))
+
+    return get_alerts_by_source_ip(limit=limit)
+
+
+@app.get("/analytics/trends")
+def analytics_trends(
+    days: int = 7,
+    current_user: dict = Depends(get_current_user),
+):
+    """Return daily alert trends."""
+
+    days = max(1, min(days, 365))
+
+    return get_alert_trends(days=days)
+
+
+@app.get("/analytics/investigations")
+def analytics_investigations(
+    current_user: dict = Depends(get_current_user),
+):
+    """Return investigation and response-time analytics."""
+
+    return get_investigation_analytics()
+
+
+@app.get("/analytics/cspm")
+def analytics_cspm(
+    current_user: dict = Depends(get_current_user),
+):
+    """Return CSPM finding analytics."""
+
+    return get_cspm_analytics() 
 
 
 @app.get("/findings")

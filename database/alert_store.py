@@ -515,6 +515,448 @@ def get_soc_metrics():
             else 0
         )
     }
+
+def get_soc_analytics_overview():
+    """
+    Return a consolidated SOC analytics overview.
+
+    This extends the existing SOC metrics without changing
+    the existing get_soc_metrics() contract.
+    """
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    # Alert severity distribution
+    cursor.execute("""
+        SELECT
+            UPPER(severity) AS severity,
+            COUNT(*)
+        FROM alerts
+        GROUP BY UPPER(severity)
+    """)
+
+    severity_counts = {
+        "CRITICAL": 0,
+        "HIGH": 0,
+        "MEDIUM": 0,
+        "LOW": 0,
+    }
+
+    for severity, count in cursor.fetchall():
+        if severity in severity_counts:
+            severity_counts[severity] = count
+
+    # Investigation status distribution.
+    # Alerts without an investigation are considered OPEN.
+    cursor.execute("""
+        SELECT
+            COALESCE(i.status, 'OPEN') AS status,
+            COUNT(*)
+        FROM alerts a
+        LEFT JOIN investigations i
+            ON a.id = i.alert_id
+        GROUP BY COALESCE(i.status, 'OPEN')
+    """)
+
+    status_counts = {
+        "OPEN": 0,
+        "INVESTIGATING": 0,
+        "RESOLVED": 0,
+    }
+
+    for status, count in cursor.fetchall():
+        if status in status_counts:
+            status_counts[status] = count
+
+    # Average risk score
+    cursor.execute("""
+        SELECT COALESCE(AVG(risk_score), 0)
+        FROM alerts
+    """)
+
+    average_risk_score = cursor.fetchone()[0]
+
+    # Total distinct users generating alerts
+    cursor.execute("""
+        SELECT COUNT(DISTINCT user)
+        FROM alerts
+        WHERE user IS NOT NULL
+          AND TRIM(user) != ''
+    """)
+
+    unique_users = cursor.fetchone()[0]
+
+    # Total distinct source IPs
+    cursor.execute("""
+        SELECT COUNT(DISTINCT source_ip)
+        FROM alerts
+        WHERE source_ip IS NOT NULL
+          AND TRIM(source_ip) != ''
+    """)
+
+    unique_source_ips = cursor.fetchone()[0]
+
+    # Total distinct detection rules
+    cursor.execute("""
+        SELECT COUNT(DISTINCT rule)
+        FROM alerts
+        WHERE rule IS NOT NULL
+    """)
+
+    unique_rules = cursor.fetchone()[0]
+
+    # Alerts generated today
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM alerts
+        WHERE date(created_at) = date('now')
+    """)
+
+    alerts_today = cursor.fetchone()[0]
+
+    # Alerts generated during the previous 24 hours
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM alerts
+        WHERE created_at >= datetime('now', '-24 hours')
+    """)
+
+    alerts_last_24_hours = cursor.fetchone()[0]
+
+    # Average resolution time
+    cursor.execute("""
+        SELECT AVG(
+            (julianday(i.resolved_at) - julianday(a.created_at)) * 24 * 60
+        )
+        FROM alerts a
+        JOIN investigations i
+            ON a.id = i.alert_id
+        WHERE i.status = 'RESOLVED'
+          AND i.resolved_at IS NOT NULL
+    """)
+
+    average_resolution_time = cursor.fetchone()[0]
+
+    connection.close()
+
+    return {
+        "total_alerts": sum(severity_counts.values()),
+        "critical_alerts": severity_counts["CRITICAL"],
+        "high_alerts": severity_counts["HIGH"],
+        "medium_alerts": severity_counts["MEDIUM"],
+        "low_alerts": severity_counts["LOW"],
+        "open_alerts": status_counts["OPEN"],
+        "investigating_alerts": status_counts["INVESTIGATING"],
+        "resolved_alerts": status_counts["RESOLVED"],
+        "average_risk_score": round(
+            float(average_risk_score or 0),
+            2,
+        ),
+        "average_resolution_time_minutes": round(
+            float(average_resolution_time or 0),
+            2,
+        ),
+        "unique_users": unique_users,
+        "unique_source_ips": unique_source_ips,
+        "unique_rules": unique_rules,
+        "alerts_today": alerts_today,
+        "alerts_last_24_hours": alerts_last_24_hours,
+    }
+
+
+def get_alerts_by_severity():
+    """Return alert counts grouped by severity."""
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT
+            UPPER(severity) AS severity,
+            COUNT(*) AS count
+        FROM alerts
+        GROUP BY UPPER(severity)
+        ORDER BY
+            CASE UPPER(severity)
+                WHEN 'CRITICAL' THEN 1
+                WHEN 'HIGH' THEN 2
+                WHEN 'MEDIUM' THEN 3
+                WHEN 'LOW' THEN 4
+                ELSE 5
+            END
+    """)
+
+    rows = cursor.fetchall()
+
+    connection.close()
+
+    return [
+        {
+            "severity": severity,
+            "count": count,
+        }
+        for severity, count in rows
+    ]
+
+
+def get_alerts_by_rule():
+    """Return alert counts grouped by detection rule."""
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT
+            rule,
+            COUNT(*) AS count
+        FROM alerts
+        WHERE rule IS NOT NULL
+        GROUP BY rule
+        ORDER BY count DESC, rule ASC
+    """)
+
+    rows = cursor.fetchall()
+
+    connection.close()
+
+    return [
+        {
+            "rule": rule,
+            "count": count,
+        }
+        for rule, count in rows
+    ]
+
+
+def get_alerts_by_user(limit: int = 10):
+    """Return users with the highest number of generated alerts."""
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT
+            COALESCE(user, 'Unknown') AS user,
+            COUNT(*) AS count
+        FROM alerts
+        GROUP BY COALESCE(user, 'Unknown')
+        ORDER BY count DESC, user ASC
+        LIMIT ?
+    """, (limit,))
+
+    rows = cursor.fetchall()
+
+    connection.close()
+
+    return [
+        {
+            "user": user,
+            "count": count,
+        }
+        for user, count in rows
+    ]
+
+
+def get_alerts_by_source_ip(limit: int = 10):
+    """Return source IPs generating the highest number of alerts."""
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT
+            COALESCE(source_ip, 'Unknown') AS source_ip,
+            COUNT(*) AS count
+        FROM alerts
+        GROUP BY COALESCE(source_ip, 'Unknown')
+        ORDER BY count DESC, source_ip ASC
+        LIMIT ?
+    """, (limit,))
+
+    rows = cursor.fetchall()
+
+    connection.close()
+
+    return [
+        {
+            "source_ip": source_ip,
+            "count": count,
+        }
+        for source_ip, count in rows
+    ]
+
+
+def get_alert_trends(days: int = 7):
+    """
+    Return daily alert counts for the requested number of days.
+
+    The result is ordered chronologically so it can be directly
+    consumed by dashboard charts or Power BI.
+    """
+
+    days = max(1, min(int(days), 365))
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT
+            date(created_at) AS date,
+            COUNT(*) AS count
+        FROM alerts
+        WHERE created_at >= date('now', ?)
+        GROUP BY date(created_at)
+        ORDER BY date ASC
+    """, (f"-{days - 1} days",))
+
+    rows = cursor.fetchall()
+
+    connection.close()
+
+    return [
+        {
+            "date": date,
+            "count": count,
+        }
+        for date, count in rows
+    ]
+
+
+def get_investigation_analytics():
+    """Return investigation and response-time analytics."""
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT
+            COALESCE(i.status, 'OPEN') AS status,
+            COUNT(*) AS count
+        FROM alerts a
+        LEFT JOIN investigations i
+            ON a.id = i.alert_id
+        GROUP BY COALESCE(i.status, 'OPEN')
+    """)
+
+    status_counts = {
+        "OPEN": 0,
+        "INVESTIGATING": 0,
+        "RESOLVED": 0,
+    }
+
+    for status, count in cursor.fetchall():
+        if status in status_counts:
+            status_counts[status] = count
+
+    cursor.execute("""
+        SELECT AVG(
+            (julianday(i.resolved_at) - julianday(a.created_at)) * 24 * 60
+        )
+        FROM alerts a
+        JOIN investigations i
+            ON a.id = i.alert_id
+        WHERE i.status = 'RESOLVED'
+          AND i.resolved_at IS NOT NULL
+    """)
+
+    average_resolution_time = cursor.fetchone()[0]
+
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM investigations
+        WHERE status = 'RESOLVED'
+          AND resolved_at IS NOT NULL
+    """)
+
+    resolved_investigations = cursor.fetchone()[0]
+
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM investigations
+    """)
+
+    total_investigations = cursor.fetchone()[0]
+
+    connection.close()
+
+    resolution_rate = (
+        (resolved_investigations / total_investigations) * 100
+        if total_investigations
+        else 0
+    )
+
+    return {
+        "open": status_counts["OPEN"],
+        "investigating": status_counts["INVESTIGATING"],
+        "resolved": status_counts["RESOLVED"],
+        "total_investigations": total_investigations,
+        "resolved_investigations": resolved_investigations,
+        "resolution_rate_percent": round(
+            resolution_rate,
+            2,
+        ),
+        "average_resolution_time_minutes": round(
+            float(average_resolution_time or 0),
+            2,
+        ),
+    }
+
+
+def get_cspm_analytics():
+    """Return severity and status analytics for CSPM findings."""
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT
+            UPPER(severity) AS severity,
+            COUNT(*) AS count
+        FROM security_findings
+        GROUP BY UPPER(severity)
+    """)
+
+    severity_counts = {
+        "CRITICAL": 0,
+        "HIGH": 0,
+        "MEDIUM": 0,
+        "LOW": 0,
+    }
+
+    for severity, count in cursor.fetchall():
+        if severity in severity_counts:
+            severity_counts[severity] = count
+
+    cursor.execute("""
+        SELECT
+            UPPER(status) AS status,
+            COUNT(*) AS count
+        FROM security_findings
+        GROUP BY UPPER(status)
+    """)
+
+    status_counts = {
+        "OPEN": 0,
+        "RESOLVED": 0,
+    }
+
+    for status, count in cursor.fetchall():
+        if status in status_counts:
+            status_counts[status] = count
+
+    connection.close()
+
+    return {
+        "total": sum(severity_counts.values()),
+        "critical": severity_counts["CRITICAL"],
+        "high": severity_counts["HIGH"],
+        "medium": severity_counts["MEDIUM"],
+        "low": severity_counts["LOW"],
+        "open": status_counts["OPEN"],
+        "resolved": status_counts["RESOLVED"],
+    }
+
 def create_user(
     username: str,
     email: str,
